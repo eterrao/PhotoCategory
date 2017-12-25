@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="2dp">
+
+    <ImageView
+        android:id="@+id/iv_photo"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="5dp"
+        android:background="#ffccff" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/iv_photo"
+        android:layout_toRightOf="@+id/iv_photo"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_photo_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="photo name"
+            tools:layout_editor_absoluteX="113dp"
+            tools:layout_editor_absoluteY="7dp"
+            tools:text="@string/photo_name" />
+
+        <TextView
+            android:id="@+id/tv_photo_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="photo description"
+            tools:layout_editor_absoluteX="113dp"
+            tools:layout_editor_absoluteY="55dp" />
+
+        <TextView
+            android:id="@+id/tv_photo_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="photo date"
+            tools:layout_editor_absoluteX="113dp"
+            tools:layout_editor_absoluteY="35dp" />
+
+
+        <TextView
+            android:id="@+id/tv_photo_geo_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="photo geo info"
+            tools:layout_editor_absoluteX="113dp"
+            tools:layout_editor_absoluteY="76dp" />
+    </LinearLayout>
+</RelativeLayout>
