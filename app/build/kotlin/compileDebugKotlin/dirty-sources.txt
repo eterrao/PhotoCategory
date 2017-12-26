@@ -1,0 +1,1 @@
+/home/ericrao/work/welove-android/PhotoCategory/app/src/main/java/welove520/com/photocategory/MainActivity.kt

@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'org.greenrobot.greendao' // apply plugin
 
 android {
     compileSdkVersion 26
@@ -24,7 +25,15 @@ android {
         }
     }
 }
-
+kapt { generateStubs = true }
+sourceSets {
+    main {
+        java.srcDirs = ['src/main/java', 'build/generated/source/greendao']
+    }
+}
+greendao {
+    targetGenDir 'src/main/java'
+}
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:26.1.0'
@@ -51,8 +60,7 @@ dependencies {
     compile 'com.trello:rxlifecycle:1.0'
     compile 'com.trello:rxlifecycle-components:1.0'
     compile "com.android.support:exifinterface:25.1.0"
-
-
+    compile 'org.greenrobot:greendao:3.2.2' // add library
 }
 repositories {
     jcenter()

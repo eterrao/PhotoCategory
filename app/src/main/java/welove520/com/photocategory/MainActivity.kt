@@ -21,6 +21,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.item_photo.view.*
+import org.greenrobot.greendao.query.Query
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import rx.functions.Action1
@@ -34,8 +35,11 @@ import java.io.File
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private var pickPreferences: PickPreferences? = null
-    private val allPhotos: List<String>? = null
     private var photoRVAdapter: PhotoRVAdapter? = null
+
+    private var photoDao: PhotoDao? = null
+
+    private var notesQuery: Query<Photo>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +62,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             PermissionManager.checkPermissions(permissions, PERMISSION_REQUEST_CODE, this)
         }
 
+        val daoSession: DaoSession = (application as App).daoSession
+        photoDao = daoSession.photoDao
+        notesQuery = photoDao!!.queryBuilder().orderAsc(PhotoDao.Properties.PhotoName).build()
+        val notes = notesQuery!!.list()
+        photoRVAdapter!!.setPhotos(notes)
     }
 
     private fun initPhotoRecyclerView() {
@@ -89,8 +98,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         return if (id == R.id.action_settings) {
             true
+        } else if (id == R.id.action_add) {
+            true
         } else super.onOptionsItemSelected(item)
     }
+
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
@@ -121,13 +133,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     val groupImage = PickPreferences.getInstance(this@MainActivity).listImage
                     if (groupImage!!.getGroupMap() != null && groupImage.getGroupMap().size > 0) {
                         val photosList = groupImage.getGroupMap()[PickConfig.ALL_PHOTOS]
-                        initRVAdapter(photosList!!)
+                        val photoList: MutableList<Photo> = ArrayList()
+                        for (photoPath: String in photosList!!) {
+                            var photo = Photo()
+                            photo.photoPath = photoPath
+                            photoList.add(photo)
+                        }
+                        initRVAdapter(photoList!!)
                     }
                 })
-
     }
 
-    private fun initRVAdapter(photosList: MutableList<String>) {
+    private fun initRVAdapter(photosList: MutableList<Photo>) {
         photoRVAdapter = PhotoRVAdapter(photosList)
         photoRVAdapter!!.setHasStableIds(true)
         //        photoRVAdapter.setOnItemClickListener(new MainAlbumRVAdapter.OnAlbumItemClickListener() {
@@ -139,9 +156,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         rv_photo!!.adapter = photoRVAdapter
     }
 
-    private inner class PhotoRVAdapter(photosList: MutableList<String>?) : RecyclerView.Adapter<PhotoRVAdapter.ViewHolder>() {
+    private inner class PhotoRVAdapter(photosList: MutableList<Photo>?) : RecyclerView.Adapter<PhotoRVAdapter.ViewHolder>() {
 
-        private var photoList: MutableList<String>? = null
+        private var photoList: MutableList<Photo>? = null
 
         init {
             if (photosList != null) {
@@ -174,23 +191,33 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             var tvPhotoDate = itemView.tv_photo_date
             var tvPhotoGeoInfo = itemView.tv_photo_geo_info
 
-            fun bind(photoPath: String) {
+            fun bind(photo: Photo) {
                 Glide.with(ivPhoto.context)
-                        .load(photoPath)
+                        .load(photo)
                         .into(ivPhoto)
 
-                var exifInterface = ExifInterface(photoPath)
+                var exifInterface = ExifInterface(photo.photoPath)
                 val altitude = exifInterface.getAltitude(0.0)
                 val latArray = FloatArray(2)
                 exifInterface.getLatLong(latArray)
-                tvPhotoName.text = (File(photoPath).name)
+                tvPhotoName.text = (File(photo.photoPath).name)
                 val photoDate = exifInterface.getAttribute(ExifInterface.TAG_DATETIME)
                 Log.e("log_tag", "longtitude : " + latArray[0]
                         + ",  : " + latArray[1] + " , attrs : " + photoDate)
                 tvPhotoDate.text = (photoDate)
                 tvPhotoGeoInfo.text = ("latitude: " + latArray[0]
                         + ", longitude  : " + latArray[1])
+                var photo = Photo()
+                photo.photoName = File(photo.photoPath).name
+                photo.latitude = latArray[0].toDouble()
+                photo.longitude = latArray[1].toDouble()
+                Log.e("log_tag", "photo string= " + photo.toString())
+
             }
+        }
+
+        fun setPhotos(photos: MutableList<Photo>) {
+            this.photoList = photos
         }
     }
 
