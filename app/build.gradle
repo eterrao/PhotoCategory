@@ -61,6 +61,14 @@ dependencies {
     compile 'com.trello:rxlifecycle-components:1.0'
     compile "com.android.support:exifinterface:25.1.0"
     compile 'org.greenrobot:greendao:3.2.2' // add library
+
+    compile 'com.amap.api:map2d:latest.integration'
+    //定位功能
+    compile 'com.amap.api:location:latest.integration'
+    //搜索功能
+    compile 'com.amap.api:search:latest.integration'
+
+
 }
 repositories {
     jcenter()

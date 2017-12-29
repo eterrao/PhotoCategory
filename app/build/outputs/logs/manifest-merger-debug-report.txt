@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-47:12
-INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-47:12
-INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-47:12
-INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-47:12
+ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-66:12
+INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-66:12
+INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-66:12
+INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-66:12
 MERGED from [com.jakewharton:butterknife:8.5.1] /root/.gradle/caches/transforms-1/files-1.1/butterknife-8.5.1.aar/349f1ee385b094cc1a4b0575c3030695/AndroidManifest.xml:2:1-7:12
 MERGED from [jp.wasabeef:glide-transformations:2.0.2] /root/.gradle/caches/transforms-1/files-1.1/glide-transformations-2.0.2.aar/db966aeaf5049c24d41b92870097378c/AndroidManifest.xml:2:1-12:12
 MERGED from [com.trello:rxlifecycle-components:1.0] /root/.gradle/caches/transforms-1/files-1.1/rxlifecycle-components-1.0.aar/281fdef29a67f3bec6b56311a6599b90/AndroidManifest.xml:13:1-19:12
@@ -25,20 +25,20 @@ MERGED from [com.android.support:support-core-ui:26.1.0] /root/.gradle/caches/tr
 MERGED from [com.android.support:support-vector-drawable:26.1.0] /root/.gradle/caches/transforms-1/files-1.1/support-vector-drawable-26.1.0.aar/e44d77349a6dafc9ab1a66b27be45aba/AndroidManifest.xml:17:1-28:12
 MERGED from [com.android.support:support-compat:26.1.0] /root/.gradle/caches/transforms-1/files-1.1/support-compat-26.1.0.aar/006c5922582c7dd09feb8c4529cf2ded/AndroidManifest.xml:17:1-31:12
 MERGED from [android.arch.lifecycle:runtime:1.0.0] /root/.gradle/caches/transforms-1/files-1.1/runtime-1.0.0.aar/9bfcc321ac72ae9f7d61b9a28ae5718f/AndroidManifest.xml:17:1-30:12
-INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-47:12
-INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-47:12
-INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-47:12
+INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-66:12
+INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-66:12
+INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-66:12
 	package
 		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:3:5-42
 		INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml
 		INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml
 	android:versionName
 		INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-47:12
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-66:12
 		INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml
 	android:versionCode
 		INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-47:12
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:1-66:12
 		INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml
 	xmlns:android
 		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:2:11-69
@@ -123,7 +123,7 @@ ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidM
 	android:name
 		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:24:22-62
 application
-ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:26:5-45:19
+ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:41:5-64:19
 MERGED from [com.android.support:exifinterface:25.1.0] /root/.gradle/caches/transforms-1/files-1.1/exifinterface-25.1.0.aar/b4eb2620e739b4240b14fb8792157764/AndroidManifest.xml:22:5-20
 MERGED from [com.android.support:exifinterface:25.1.0] /root/.gradle/caches/transforms-1/files-1.1/exifinterface-25.1.0.aar/b4eb2620e739b4240b14fb8792157764/AndroidManifest.xml:22:5-20
 MERGED from [com.android.support:design:26.1.0] /root/.gradle/caches/transforms-1/files-1.1/design-26.1.0.aar/c9f981c2222f5a2c635895d656fbf28a/AndroidManifest.xml:25:5-29:19
@@ -155,41 +155,47 @@ MERGED from [com.android.support:support-compat:26.1.0] /root/.gradle/caches/tra
 MERGED from [android.arch.lifecycle:runtime:1.0.0] /root/.gradle/caches/transforms-1/files-1.1/runtime-1.0.0.aar/9bfcc321ac72ae9f7d61b9a28ae5718f/AndroidManifest.xml:24:5-28:19
 MERGED from [android.arch.lifecycle:runtime:1.0.0] /root/.gradle/caches/transforms-1/files-1.1/runtime-1.0.0.aar/9bfcc321ac72ae9f7d61b9a28ae5718f/AndroidManifest.xml:24:5-28:19
 	android:supportsRtl
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:32:9-35
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:47:9-35
 	android:label
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:30:9-41
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:45:9-41
 	android:roundIcon
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:31:9-54
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:46:9-54
 	android:icon
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:29:9-43
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:44:9-43
 	android:allowBackup
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:28:9-35
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:43:9-35
 	android:theme
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:33:9-40
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:48:9-40
 	android:name
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:27:9-38
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:42:9-38
 activity#welove520.com.photocategory.MainActivityJava
-ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:34:9-43:20
+ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:49:9-58:20
 	android:label
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:36:13-45
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:51:13-45
 	android:theme
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:37:13-56
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:52:13-56
 	android:name
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:35:13-45
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:50:13-45
 intent-filter#android.intent.action.MAIN+android.intent.category.LAUNCHER
-ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:38:13-42:29
+ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:53:13-57:29
 action#android.intent.action.MAIN
-ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:39:17-69
+ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:54:17-69
 	android:name
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:39:25-66
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:54:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:41:17-77
+ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:56:17-77
 	android:name
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:41:27-74
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:56:27-74
 activity#welove520.com.photocategory.MainActivity
-ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:44:9-50
+ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:59:9-50
 	android:name
-		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:44:19-47
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:59:19-47
+meta-data#com.amap.api.v2.apikey
+ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:61:9-63:64
+	android:value
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:63:13-61
+	android:name
+		ADDED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml:62:13-50
 uses-sdk
 INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/ericrao/work/welove-android/PhotoCategory/app/src/main/AndroidManifest.xml
