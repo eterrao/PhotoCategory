@@ -3,7 +3,6 @@ package welove520.com.photocategory;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.os.Bundle;
@@ -30,10 +29,10 @@ import com.amap.api.maps2d.AMap;
 import com.amap.api.maps2d.MapView;
 import com.amap.api.maps2d.model.BitmapDescriptorFactory;
 import com.amap.api.maps2d.model.LatLng;
-import com.amap.api.maps2d.model.Marker;
 import com.amap.api.maps2d.model.MarkerOptions;
 import com.amap.api.services.core.AMapException;
 import com.amap.api.services.core.LatLonPoint;
+import com.amap.api.services.geocoder.BusinessArea;
 import com.amap.api.services.geocoder.GeocodeResult;
 import com.amap.api.services.geocoder.GeocodeSearch;
 import com.amap.api.services.geocoder.RegeocodeQuery;
@@ -139,16 +138,12 @@ public class MainActivityJava extends AppCompatActivity
      * @param latlng
      */
     private void addMarkersToMap(LatLng latlng, String path) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        options.inSampleSize = computSampleSize(options, 32, 18);
-        Bitmap bitmap = BitmapFactory.decodeFile(path, options);
-        options.inJustDecodeBounds = false;
+
         markerOption = new MarkerOptions()
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_launcher))
                 .position(latlng)
                 .draggable(false);
-        aMap.addMarker(markerOption);
+        aMap.addMarker(markerOption).showInfoWindow();
 //        customMarker.showInfoWindow();
     }
 
@@ -320,9 +315,6 @@ public class MainActivityJava extends AppCompatActivity
         photoDao = daoSession.getPhotoDao();
         photosQuery = photoDao.queryBuilder().orderAsc(PhotoDao.Properties.PhotoName).build();
         photos = photosQuery.list();
-//        if (photos != null && photos.size() > 0) {
-//            photoRVAdapter.setPhotos(photos);
-//        }
     }
 
     @Override
@@ -334,12 +326,16 @@ public class MainActivityJava extends AppCompatActivity
         if (rCode == AMapException.CODE_AMAP_SUCCESS) {
             if (result != null && result.getRegeocodeAddress() != null
                     && result.getRegeocodeAddress().getFormatAddress() != null) {
-                String addressName = result.getRegeocodeAddress().getFormatAddress()
-                        + "附近";
+//                result.getRegeocodeAddress().getFormatAddress()
+                List<BusinessArea> addressName = result.getRegeocodeAddress().getBusinessAreas();
+                for (BusinessArea bussinessArea :
+                        addressName) {
+                    Log.e(TAG, "address area = " + bussinessArea.getName());
+                }
 //                aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
 //                        AMapUtil.convertToLatLng(latLonPoint), 15));
 //                regeoMarker.setPosition(AMapUtil.convertToLatLng(latLonPoint));
-                Toast.makeText(this, addressName, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, addressName, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, R.string.no_result, Toast.LENGTH_SHORT).show();
             }

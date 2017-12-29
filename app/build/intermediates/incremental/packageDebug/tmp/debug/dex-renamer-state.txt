@@ -1,4 +1,4 @@
-#Fri Dec 29 17:22:25 CST 2017
+#Fri Dec 29 18:35:51 CST 2017
 base.0=/home/ericrao/work/welove-android/PhotoCategory/app/build/intermediates/transforms/dexMerger/debug/0
 path.0=classes.dex
 renamed.0=classes.dex
