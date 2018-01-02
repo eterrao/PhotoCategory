@@ -24,34 +24,36 @@
             android:id="@+id/tv_photo_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="photo name"
-            tools:layout_editor_absoluteX="113dp"
-            tools:layout_editor_absoluteY="7dp"
-            tools:text="@string/photo_name" />
+            android:text=""
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/tv_photo_description"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="photo description"
+            android:text=""
+            android:textSize="13sp"
             tools:layout_editor_absoluteX="113dp"
             tools:layout_editor_absoluteY="55dp" />
-
-        <TextView
-            android:id="@+id/tv_photo_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="photo date"
-            tools:layout_editor_absoluteX="113dp"
-            tools:layout_editor_absoluteY="35dp" />
 
 
         <TextView
             android:id="@+id/tv_photo_geo_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="photo geo info"
+            android:text=""
+            android:textSize="13sp"
             tools:layout_editor_absoluteX="113dp"
             tools:layout_editor_absoluteY="76dp" />
+
+        <TextView
+            android:id="@+id/tv_photo_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="13sp"
+            tools:layout_editor_absoluteX="113dp"
+            tools:layout_editor_absoluteY="35dp" />
+
     </LinearLayout>
 </RelativeLayout>

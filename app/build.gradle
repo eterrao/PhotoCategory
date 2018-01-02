@@ -12,6 +12,10 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        ndk {
+            //设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
+            abiFilters "armeabi", "armeabi-v7a"
+        }
     }
     buildTypes {
         release {
@@ -61,13 +65,14 @@ dependencies {
     compile 'com.trello:rxlifecycle-components:1.0'
     compile "com.android.support:exifinterface:25.1.0"
     compile 'org.greenrobot:greendao:3.2.2' // add library
+    //3D地图so及jar
+    compile 'com.amap.api:3dmap:latest.integration'
 
     compile 'com.amap.api:map2d:latest.integration'
     //定位功能
     compile 'com.amap.api:location:latest.integration'
     //搜索功能
     compile 'com.amap.api:search:latest.integration'
-
 
 }
 repositories {

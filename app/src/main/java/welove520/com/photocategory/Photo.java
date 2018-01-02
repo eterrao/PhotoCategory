@@ -5,9 +5,6 @@ import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
 import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Date;
 
 /**
  * Created by Raomengyang on 17-12-26.
@@ -25,24 +22,26 @@ public class Photo {
 
     @NotNull
     private String photoName;
-    private Date photoDate;
+    private String photoDate;
     private Double latitude;
     private Double longitude;
     private String photoPath;
+    private int photoTag;
 
     @Generated(hash = 1043664727)
     public Photo() {
     }
 
-    @Generated(hash = 1384252396)
-    public Photo(Long id, @NotNull String photoName, Date photoDate, Double latitude,
-            Double longitude, String photoPath) {
+    @Generated(hash = 1160415127)
+    public Photo(Long id, @NotNull String photoName, String photoDate, Double latitude,
+            Double longitude, String photoPath, int photoTag) {
         this.id = id;
         this.photoName = photoName;
         this.photoDate = photoDate;
         this.latitude = latitude;
         this.longitude = longitude;
         this.photoPath = photoPath;
+        this.photoTag = photoTag;
     }
 
     public Long getId() {
@@ -62,11 +61,11 @@ public class Photo {
     }
 
 
-    public Date getPhotoDate() {
+    public String getPhotoDate() {
         return photoDate;
     }
 
-    public void setPhotoDate(Date photoDate) {
+    public void setPhotoDate(String photoDate) {
         this.photoDate = photoDate;
     }
 
@@ -94,14 +93,24 @@ public class Photo {
         this.photoPath = photoPath;
     }
 
+    public int getPhotoTag() {
+        return photoTag;
+    }
+
+    public void setPhotoTag(int photoTag) {
+        this.photoTag = photoTag;
+    }
+
     @Override
     public String toString() {
         return "Photo{" +
                 "id=" + id +
                 ", photoName='" + photoName + '\'' +
-                ", photoDate=" + photoDate +
+                ", photoDate='" + photoDate + '\'' +
                 ", latitude=" + latitude +
                 ", longitude=" + longitude +
+                ", photoPath='" + photoPath + '\'' +
+                ", photoTag=" + photoTag +
                 '}';
     }
 }

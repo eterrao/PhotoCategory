@@ -24,10 +24,11 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
     public static class Properties {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property PhotoName = new Property(1, String.class, "photoName", false, "PHOTO_NAME");
-        public final static Property PhotoDate = new Property(2, java.util.Date.class, "photoDate", false, "PHOTO_DATE");
+        public final static Property PhotoDate = new Property(2, String.class, "photoDate", false, "PHOTO_DATE");
         public final static Property Latitude = new Property(3, Double.class, "latitude", false, "LATITUDE");
         public final static Property Longitude = new Property(4, Double.class, "longitude", false, "LONGITUDE");
         public final static Property PhotoPath = new Property(5, String.class, "photoPath", false, "PHOTO_PATH");
+        public final static Property PhotoTag = new Property(6, int.class, "photoTag", false, "PHOTO_TAG");
     }
 
 
@@ -45,10 +46,11 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         db.execSQL("CREATE TABLE " + constraint + "\"PHOTO\" (" + //
                 "\"_id\" INTEGER PRIMARY KEY ," + // 0: id
                 "\"PHOTO_NAME\" TEXT NOT NULL ," + // 1: photoName
-                "\"PHOTO_DATE\" INTEGER," + // 2: photoDate
+                "\"PHOTO_DATE\" TEXT," + // 2: photoDate
                 "\"LATITUDE\" REAL," + // 3: latitude
                 "\"LONGITUDE\" REAL," + // 4: longitude
-                "\"PHOTO_PATH\" TEXT);"); // 5: photoPath
+                "\"PHOTO_PATH\" TEXT," + // 5: photoPath
+                "\"PHOTO_TAG\" INTEGER NOT NULL );"); // 6: photoTag
         // Add Indexes
         db.execSQL("CREATE UNIQUE INDEX " + constraint + "IDX_PHOTO_PHOTO_NAME_PHOTO_DATE_DESC ON \"PHOTO\"" +
                 " (\"PHOTO_NAME\" ASC,\"PHOTO_DATE\" DESC);");
@@ -70,9 +72,9 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         }
         stmt.bindString(2, entity.getPhotoName());
  
-        java.util.Date photoDate = entity.getPhotoDate();
+        String photoDate = entity.getPhotoDate();
         if (photoDate != null) {
-            stmt.bindLong(3, photoDate.getTime());
+            stmt.bindString(3, photoDate);
         }
  
         Double latitude = entity.getLatitude();
@@ -89,6 +91,7 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         if (photoPath != null) {
             stmt.bindString(6, photoPath);
         }
+        stmt.bindLong(7, entity.getPhotoTag());
     }
 
     @Override
@@ -101,9 +104,9 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         }
         stmt.bindString(2, entity.getPhotoName());
  
-        java.util.Date photoDate = entity.getPhotoDate();
+        String photoDate = entity.getPhotoDate();
         if (photoDate != null) {
-            stmt.bindLong(3, photoDate.getTime());
+            stmt.bindString(3, photoDate);
         }
  
         Double latitude = entity.getLatitude();
@@ -120,6 +123,7 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         if (photoPath != null) {
             stmt.bindString(6, photoPath);
         }
+        stmt.bindLong(7, entity.getPhotoTag());
     }
 
     @Override
@@ -132,10 +136,11 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         Photo entity = new Photo( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.getString(offset + 1), // photoName
-            cursor.isNull(offset + 2) ? null : new java.util.Date(cursor.getLong(offset + 2)), // photoDate
+            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // photoDate
             cursor.isNull(offset + 3) ? null : cursor.getDouble(offset + 3), // latitude
             cursor.isNull(offset + 4) ? null : cursor.getDouble(offset + 4), // longitude
-            cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5) // photoPath
+            cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5), // photoPath
+            cursor.getInt(offset + 6) // photoTag
         );
         return entity;
     }
@@ -144,10 +149,11 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
     public void readEntity(Cursor cursor, Photo entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setPhotoName(cursor.getString(offset + 1));
-        entity.setPhotoDate(cursor.isNull(offset + 2) ? null : new java.util.Date(cursor.getLong(offset + 2)));
+        entity.setPhotoDate(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setLatitude(cursor.isNull(offset + 3) ? null : cursor.getDouble(offset + 3));
         entity.setLongitude(cursor.isNull(offset + 4) ? null : cursor.getDouble(offset + 4));
         entity.setPhotoPath(cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5));
+        entity.setPhotoTag(cursor.getInt(offset + 6));
      }
     
     @Override

@@ -3,7 +3,14 @@ package welove520.com.photocategory;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Shader;
 import android.media.ExifInterface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -25,11 +32,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.amap.api.maps2d.AMap;
-import com.amap.api.maps2d.MapView;
-import com.amap.api.maps2d.model.BitmapDescriptorFactory;
-import com.amap.api.maps2d.model.LatLng;
-import com.amap.api.maps2d.model.MarkerOptions;
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.AMapUtils;
+import com.amap.api.maps.MapView;
+import com.amap.api.maps.model.BitmapDescriptorFactory;
+import com.amap.api.maps.model.HeatmapTileProvider;
+import com.amap.api.maps.model.LatLng;
+import com.amap.api.maps.model.MarkerOptions;
+import com.amap.api.maps.model.TileOverlayOptions;
 import com.amap.api.services.core.AMapException;
 import com.amap.api.services.core.LatLonPoint;
 import com.amap.api.services.geocoder.BusinessArea;
@@ -44,6 +54,8 @@ import org.greenrobot.greendao.query.Query;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import butterknife.BindView;
@@ -137,14 +149,111 @@ public class MainActivityJava extends AppCompatActivity
      *
      * @param latlng
      */
-    private void addMarkersToMap(LatLng latlng, String path) {
+    private void addMarkersToMap(final LatLng latlng, String path) {
+        Bitmap source = getClipBitmap(path, 80, 45);
+        if (source != null) {
+            int width = source.getWidth();
+            int height = source.getHeight();
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            Paint paint = new Paint();
+            paint.setAntiAlias(true);
+            paint.setShader(new BitmapShader(source, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+            drawRoundRect(canvas, paint, width, height);
+            markerOption = new MarkerOptions()
+                    .icon(BitmapDescriptorFactory.fromBitmap(bitmap))
+//                .icon(BitmapDescriptorFactory.fromBitmap(resource))
+                    .position(latlng)
+                    .draggable(false);
+            aMap.addMarker(markerOption).showInfoWindow();
+        }
 
-        markerOption = new MarkerOptions()
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_launcher))
-                .position(latlng)
-                .draggable(false);
-        aMap.addMarker(markerOption).showInfoWindow();
+//        Glide.with(this)
+//                .load(path)
+//                .asBitmap()
+//                .listener(new RequestListener<String, Bitmap>() {
+//                    @Override
+//                    public boolean onException(Exception e, String model, Target<Bitmap> target, boolean isFirstResource) {
+//                        return false;
+//                    }
+//
+//                    @Override
+//                    public boolean onResourceReady(Bitmap resource, String model, Target<Bitmap> target, boolean isFromMemoryCache, boolean isFirstResource) {
+//                        markerOption = new MarkerOptions()
+////                .icon(BitmapDescriptorFactory.fromView(getClipBitmap(path, 80, 45)))
+//                                .icon(BitmapDescriptorFactory.fromBitmap(resource))
+//                                .position(latlng)
+//                                .draggable(false);
+//                        aMap.addMarker(markerOption).showInfoWindow();
+//                        return false;
+//                    }
+//                })
+//                .into(holder.ivPhotoInMap);
 //        customMarker.showInfoWindow();
+    }
+
+    private Bitmap getClipBitmap(String srcImagePath, float clipWidth, float clipHeight) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(srcImagePath, options);
+        //根据原始图片的宽高比和期望的输出图片的宽高比计算最终输出的图片的宽和高
+        float srcWidth = options.outWidth;
+        float srcHeight = options.outHeight;
+        float minWidth = clipWidth;
+        float minHeight = clipHeight;
+        float srcRatio = srcWidth / srcHeight;
+        float outRatio = minWidth / minHeight;
+        float actualOutWidth = srcWidth;
+        float actualOutHeight = srcHeight;
+
+        if (srcRatio > outRatio) {
+            actualOutHeight = minHeight;
+            actualOutWidth = actualOutHeight * srcRatio;
+        } else if (srcRatio < outRatio) {
+            actualOutWidth = minWidth;
+            actualOutHeight = actualOutWidth / srcRatio;
+        } else {
+            actualOutWidth = minWidth;
+            actualOutHeight = minHeight;
+        }
+        options.inSampleSize = computSampleSize(options, actualOutWidth, actualOutHeight);
+        options.inJustDecodeBounds = false;
+        Bitmap scaledBitmap = null;
+        try {
+            scaledBitmap = BitmapFactory.decodeFile(srcImagePath, options);
+        } catch (OutOfMemoryError e) {
+            e.printStackTrace();
+        }
+        if (scaledBitmap == null) {
+            return null;//压缩失败
+        }
+        //生成最终输出的bitmap
+        Bitmap actualOutBitmap = Bitmap.createScaledBitmap(scaledBitmap, (int) actualOutWidth, (int) actualOutHeight, true);
+        if (actualOutBitmap != scaledBitmap) {
+            scaledBitmap.recycle();
+        }
+
+        //处理图片旋转问题
+        ExifInterface exif = null;
+        try {
+            exif = new ExifInterface(srcImagePath);
+            int orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION, 0);
+            Matrix matrix = new Matrix();
+            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+                matrix.postRotate(90);
+            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+                matrix.postRotate(180);
+            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+                matrix.postRotate(270);
+            }
+            actualOutBitmap = Bitmap.createBitmap(actualOutBitmap, 0, 0,
+                    actualOutBitmap.getWidth(), actualOutBitmap.getHeight(), matrix, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return actualOutBitmap;
     }
 
     private int computSampleSize(BitmapFactory.Options options, float reqWidth, float reqHeight) {
@@ -157,6 +266,14 @@ public class MainActivityJava extends AppCompatActivity
             sampleSize = Math.min(withRatio, heightRatio);
         }
         return sampleSize;
+    }
+
+    private void drawRoundRect(Canvas canvas, Paint paint, float width, float height) {
+        float mMargin = 15f;
+        float mRadius = 5;
+        float right = width - mMargin;
+        float bottom = height - mMargin;
+        canvas.drawRoundRect(new RectF(mMargin, mMargin, right, bottom), mRadius, mRadius, paint);
     }
 
     @Override
@@ -270,13 +387,47 @@ public class MainActivityJava extends AppCompatActivity
                                 float[] latArray = new float[2];
                                 exifInterface.getLatLong(latArray);
                                 Photo photo = new Photo();
-                                photo.setPhotoName(new File(photoPath).getName());
+                                File file = new File(photoPath);
+                                if (file != null && file.exists()) {
+                                    photo.setPhotoName(file.getName());
+                                    photo.setPhotoDate(exifInterface.getAttribute(ExifInterface.TAG_DATETIME));
+                                }
                                 photo.setPhotoPath(photoPath);
                                 photo.setLatitude(Double.parseDouble(latArray[0] + ""));
                                 photo.setLongitude(Double.parseDouble(latArray[1] + ""));
-                                photoList.add(photo);
-                                LatLng latLonPoint = new LatLng(photo.getLatitude(), photo.getLongitude());
-                                addMarkersToMap(latLonPoint, photoPath);// 往地图上添加marker
+                                photo.setId((long) index);
+                                if (photo.getLatitude() == 0 && photo.getLongitude() == 0) {
+                                } else {
+                                    photoList.add(photo);
+                                    LatLng latLonPoint = new LatLng(photo.getLatitude(), photo.getLongitude());
+                                    addMarkersToMap(latLonPoint, photoPath);// 往地图上添加marker
+                                }
+                                LatLng[] latlngs = new LatLng[1];
+
+                                //生成热力点坐标列表
+                                double x = photo.getLatitude();
+                                double y = photo.getLongitude();
+
+                                double x_ = 0;
+                                double y_ = 0;
+                                x_ = Math.random() * 0.5 - 0.25;
+                                y_ = Math.random() * 0.5 - 0.25;
+                                latlngs[0] = new LatLng(x, y);
+
+                                // 构建热力图 HeatmapTileProvider
+                                HeatmapTileProvider.Builder builder = new HeatmapTileProvider.Builder();
+                                builder.data(Arrays.asList(latlngs)) // 设置热力图绘制的数据
+                                        .gradient(HeatmapTileProvider.DEFAULT_GRADIENT); // 设置热力图渐变，有默认值 DEFAULT_GRADIENT，可不设置该接口
+                                // Gradient 的设置可见参考手册
+                                // 构造热力图对象
+                                HeatmapTileProvider heatmapTileProvider = builder.build();
+
+                                // 初始化 TileOverlayOptions
+                                TileOverlayOptions tileOverlayOptions = new TileOverlayOptions();
+                                tileOverlayOptions.tileProvider(heatmapTileProvider); // 设置瓦片图层的提供者
+                                // 向地图上添加 TileOverlayOptions 类对象
+                                aMap.addTileOverlay(tileOverlayOptions);
+//                            float distance = AMapUtils.calculateLineDistance(latLonPoint,latLng2);
                             }
                             initRVAdapter(photoList);
                         }
@@ -311,10 +462,64 @@ public class MainActivityJava extends AppCompatActivity
         });
         photoRVAdapter.setHasStableIds(true);
         rvPhoto.setAdapter(photoRVAdapter);
-        DaoSession daoSession = ((MyApplication) getApplication()).getDaoSession();
-        photoDao = daoSession.getPhotoDao();
-        photosQuery = photoDao.queryBuilder().orderAsc(PhotoDao.Properties.PhotoName).build();
-        photos = photosQuery.list();
+//        DaoSession daoSession = ((MyApplication) getApplication()).getDaoSession();
+//        photoDao = daoSession.getPhotoDao();
+//        photosQuery = photoDao.queryBuilder().orderAsc(PhotoDao.Properties.PhotoName).build();
+//        photos = photosQuery.list();
+
+
+        getNearbyPhotos(photosList);
+    }
+
+    private void getNearbyPhotos(List<Photo> photosList) {
+        HashMap<Long, Long> nearbyPhotoCounterMap = new HashMap<>();
+        int tempTag = 1;
+        HashMap<Integer, List<Photo>> sortedByLocation = new HashMap<>();
+        for (int index = 0; index < photosList.size() - 1; index++) {
+            Photo cursorPhoto = photosList.get(index);
+            if (cursorPhoto.getLatitude() != 0 || cursorPhoto.getLongitude() != 0) {
+                LatLng curLat = new LatLng(cursorPhoto.getLatitude(), cursorPhoto.getLongitude());
+                for (int j = index + 1; j < photosList.size(); j++) {
+                    Photo nearbyPhoto = photosList.get(j);
+                    LatLng nearbyLat = new LatLng(nearbyPhoto.getLatitude(), nearbyPhoto.getLongitude());
+                    float distanceM = AMapUtils.calculateLineDistance(curLat, nearbyLat);
+                    if (distanceM <= 2000) {
+                        if (cursorPhoto.getPhotoTag() <= 0 && nearbyPhoto.getPhotoTag() <= 0) {
+                            cursorPhoto.setPhotoTag(tempTag);
+                            nearbyPhoto.setPhotoTag(tempTag);
+                            List<Photo> list = new ArrayList<Photo>();
+                            list.add(cursorPhoto);
+                            list.add(nearbyPhoto);
+                            sortedByLocation.put(tempTag, list);
+                            tempTag++;
+                        } else {
+                            if (cursorPhoto.getPhotoTag() > 0) {
+                                int tag = cursorPhoto.getPhotoTag();
+                                nearbyPhoto.setPhotoTag(tag);
+                                List<Photo> photoList = sortedByLocation.get(tag);
+                                photoList.add(nearbyPhoto);
+                                sortedByLocation.put(tag, photoList);
+                            } else {
+                                if (nearbyPhoto.getPhotoTag() > 0) {
+                                    int tag = nearbyPhoto.getPhotoTag();
+                                    cursorPhoto.setPhotoTag(tag);
+                                    List<Photo> photoList = sortedByLocation.get(tag);
+                                    photoList.add(cursorPhoto);
+                                    sortedByLocation.put(tag, photoList);
+                                }
+                            }
+                        }
+                        Log.e("log_tag", "distance : " + distanceM + " m");
+                        nearbyPhotoCounterMap.put(cursorPhoto.getId(), nearbyPhoto.getId());
+                    } else {
+
+                    }
+                }
+            }
+        }
+        Log.e("log_tag", "nearbyPhotoCounterMap : " + nearbyPhotoCounterMap.size());
+        Log.e("log_tag", "sortedByLocation : " + sortedByLocation.size());
+//        Iterator<Map.Entry<Long, Long>> iterator = nearbyPhotoCounterMap.entrySet().iterator();
     }
 
     @Override
@@ -403,6 +608,8 @@ public class MainActivityJava extends AppCompatActivity
                             .into(holder.ivPhoto);
                     holder.tvPhotoName.setText(photo.getPhotoName());
                     holder.tvPhotoGeoInfo.setText("lat = " + photo.getLatitude() + " , longitude = " + photo.getLongitude());
+                    holder.tvPhotoDate.setText(photo.getPhotoDate());
+                    holder.tvPhotoDescription.setText("tag: " + photo.getPhotoTag());
                 }
                 if (onItemClickedListener != null) {
                     holder.itemView.setTag(position);
@@ -427,6 +634,10 @@ public class MainActivityJava extends AppCompatActivity
 
         public void setPhotos(List<Photo> photos) {
             photoList = photos;
+        }
+
+        public List<Photo> getPhotoList() {
+            return photoList;
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
@@ -576,5 +787,14 @@ public class MainActivityJava extends AppCompatActivity
 
     private static void print(String s) {
         Log.i(TAG, s);
+    }
+
+    static class ViewHolder {
+        @BindView(R.id.iv_photo_in_map)
+        ImageView ivPhotoInMap;
+
+        ViewHolder(View view) {
+            ButterKnife.bind(this, view);
+        }
     }
 }
