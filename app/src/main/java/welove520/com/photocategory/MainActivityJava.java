@@ -5,12 +5,10 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.BitmapShader;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.Shader;
 import android.media.ExifInterface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -29,17 +27,26 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.AMapUtils;
+import com.amap.api.maps.CameraUpdate;
+import com.amap.api.maps.CameraUpdateFactory;
+import com.amap.api.maps.LocationSource;
 import com.amap.api.maps.MapView;
+import com.amap.api.maps.UiSettings;
 import com.amap.api.maps.model.BitmapDescriptorFactory;
-import com.amap.api.maps.model.HeatmapTileProvider;
+import com.amap.api.maps.model.CameraPosition;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.MarkerOptions;
-import com.amap.api.maps.model.TileOverlayOptions;
+import com.amap.api.maps.model.MyLocationStyle;
 import com.amap.api.services.core.AMapException;
 import com.amap.api.services.core.LatLonPoint;
 import com.amap.api.services.geocoder.BusinessArea;
@@ -54,9 +61,11 @@ import org.greenrobot.greendao.query.Query;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -69,12 +78,11 @@ import welove520.com.photocategory.utils.PermissionManager;
 import welove520.com.photocategory.utils.PickConfig;
 import welove520.com.photocategory.utils.PickPhotoHelper;
 import welove520.com.photocategory.utils.PickPreferences;
-import welove520.com.photocategory.utils.model.DirImage;
 import welove520.com.photocategory.utils.model.GroupImage;
 
 public class MainActivityJava extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        GeocodeSearch.OnGeocodeSearchListener {
+        GeocodeSearch.OnGeocodeSearchListener, LocationSource, AMapLocationListener, SeekBar.OnSeekBarChangeListener, AMap.OnCameraChangeListener {
     private static final int PERMISSION_REQUEST_CODE = 7;
     private static final String TAG = MainActivityJava.class.getSimpleName();
 
@@ -90,6 +98,10 @@ public class MainActivityJava extends AppCompatActivity
     DrawerLayout drawer;
     @BindView(R.id.map_view)
     MapView mapView;
+    @BindView(R.id.sb_zoom)
+    SeekBar sbZoom;
+    @BindView(R.id.rv_recommend_photo)
+    RecyclerView rvRecommendPhoto;
 
     private PickPreferences pickPreferences;
     private List<String> allPhotos;
@@ -102,6 +114,15 @@ public class MainActivityJava extends AppCompatActivity
     private ProgressDialog progDialog;
     private AMap aMap;
     private MarkerOptions markerOption;
+    private UiSettings mUiSettings;//定义一个UiSettings对象
+
+
+    OnLocationChangedListener mListener;
+    AMapLocationClient mlocationClient;
+    AMapLocationClientOption mLocationOption;
+    private ArrayList<Photo> photoList;
+    private Set<Integer> tagList;
+    private RecommendPhotoRVAdapter recommendAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +130,7 @@ public class MainActivityJava extends AppCompatActivity
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
+        tagList = new LinkedHashSet<>();
         if (PermissionManager.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
         } else {
             String[] permissions = new String[]{
@@ -141,55 +163,48 @@ public class MainActivityJava extends AppCompatActivity
 
         if (aMap == null) {
             aMap = mapView.getMap();
+
+            mUiSettings = aMap.getUiSettings();//实例化UiSettings类对象
+            mUiSettings.setMyLocationButtonEnabled(true); //显示默认的定位按钮
+            mUiSettings.setScaleControlsEnabled(true);//控制比例尺控件是否显示
+
+            aMap.setLocationSource(this);//通过aMap对象设置定位数据源的监听
+            MyLocationStyle myLocationStyle;
+            myLocationStyle = new MyLocationStyle();//初始化定位蓝点样式类myLocationStyle.myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATION_ROTATE);//连续定位、且将视角移动到地图中心点，定位点依照设备方向旋转，并且会跟随设备移动。（1秒1次定位）如果不设置myLocationType，默认也会执行此种模式。
+            myLocationStyle.interval(2000); //设置连续定位模式下的定位间隔，只在连续定位模式下生效，单次定位模式下不会生效。单位为毫秒。
+            aMap.setMyLocationStyle(myLocationStyle);//设置定位蓝点的Style
+//aMap.getUiSettings().setMyLocationButtonEnabled(true);设置默认定位按钮是否显示，非必需设置。
+            aMap.setMyLocationEnabled(true);// 设置为true表示启动显示定位蓝点，false表示隐藏定位蓝点并不进行定位，默认是false。
+            aMap.setOnCameraChangeListener(this);
         }
+
+        sbZoom.setProgress((int) aMap.getCameraPosition().zoom);
+        sbZoom.setOnSeekBarChangeListener(this);
     }
 
     /**
      * 在地图上添加marker
-     *
-     * @param latlng
      */
-    private void addMarkersToMap(final LatLng latlng, String path) {
-        Bitmap source = getClipBitmap(path, 80, 45);
-        if (source != null) {
-            int width = source.getWidth();
-            int height = source.getHeight();
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            Paint paint = new Paint();
-            paint.setAntiAlias(true);
-            paint.setShader(new BitmapShader(source, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-            drawRoundRect(canvas, paint, width, height);
-            markerOption = new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromBitmap(bitmap))
-//                .icon(BitmapDescriptorFactory.fromBitmap(resource))
-                    .position(latlng)
-                    .draggable(false);
-            aMap.addMarker(markerOption).showInfoWindow();
-        }
-
-//        Glide.with(this)
-//                .load(path)
-//                .asBitmap()
-//                .listener(new RequestListener<String, Bitmap>() {
-//                    @Override
-//                    public boolean onException(Exception e, String model, Target<Bitmap> target, boolean isFirstResource) {
-//                        return false;
-//                    }
-//
-//                    @Override
-//                    public boolean onResourceReady(Bitmap resource, String model, Target<Bitmap> target, boolean isFromMemoryCache, boolean isFirstResource) {
-//                        markerOption = new MarkerOptions()
-////                .icon(BitmapDescriptorFactory.fromView(getClipBitmap(path, 80, 45)))
-//                                .icon(BitmapDescriptorFactory.fromBitmap(resource))
-//                                .position(latlng)
-//                                .draggable(false);
-//                        aMap.addMarker(markerOption).showInfoWindow();
-//                        return false;
-//                    }
-//                })
-//                .into(holder.ivPhotoInMap);
-//        customMarker.showInfoWindow();
+    private void addMarkersToMap(Photo photo) {
+        if (photo == null) return;
+        LatLng latLng = new LatLng(photo.getLatitude(), photo.getLongitude());
+        int width = 80;
+        int height = 80;
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.BLACK);
+        Paint brushPaint = new Paint();
+        brushPaint.setStyle(Paint.Style.FILL);
+        brushPaint.setColor(Color.WHITE);
+        brushPaint.setAntiAlias(true);
+        brushPaint.setTextSize(50);
+        brushPaint.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText(String.valueOf(photo.getPhotoTag()), canvas.getWidth() / 2, canvas.getHeight() / 2, brushPaint);
+        markerOption = new MarkerOptions()
+                .icon(BitmapDescriptorFactory.fromBitmap(bitmap))
+                .position(latLng)
+                .draggable(false);
+        aMap.addMarker(markerOption).showInfoWindow();
     }
 
     private Bitmap getClipBitmap(String srcImagePath, float clipWidth, float clipHeight) {
@@ -233,26 +248,26 @@ public class MainActivityJava extends AppCompatActivity
             scaledBitmap.recycle();
         }
 
-        //处理图片旋转问题
-        ExifInterface exif = null;
-        try {
-            exif = new ExifInterface(srcImagePath);
-            int orientation = exif.getAttributeInt(
-                    ExifInterface.TAG_ORIENTATION, 0);
-            Matrix matrix = new Matrix();
-            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
-                matrix.postRotate(90);
-            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
-                matrix.postRotate(180);
-            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
-                matrix.postRotate(270);
-            }
-            actualOutBitmap = Bitmap.createBitmap(actualOutBitmap, 0, 0,
-                    actualOutBitmap.getWidth(), actualOutBitmap.getHeight(), matrix, true);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+//        //处理图片旋转问题
+//        ExifInterface exif = null;
+//        try {
+//            exif = new ExifInterface(srcImagePath);
+//            int orientation = exif.getAttributeInt(
+//                    ExifInterface.TAG_ORIENTATION, 0);
+//            Matrix matrix = new Matrix();
+//            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+//                matrix.postRotate(90);
+//            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+//                matrix.postRotate(180);
+//            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+//                matrix.postRotate(270);
+//            }
+//            actualOutBitmap = Bitmap.createBitmap(actualOutBitmap, 0, 0,
+//                    actualOutBitmap.getWidth(), actualOutBitmap.getHeight(), matrix, true);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return null;
+//        }
         return actualOutBitmap;
     }
 
@@ -298,12 +313,21 @@ public class MainActivityJava extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
         mapView.onDestroy();
+        if (null != mlocationClient) {
+            mlocationClient.onDestroy();
+        }
     }
 
     private void initPhotoRecyclerView() {
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         rvPhoto.setLayoutManager(layoutManager);
+        LinearLayoutManager recommendLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        rvRecommendPhoto.setLayoutManager(recommendLayoutManager);
+        recommendAdapter = new RecommendPhotoRVAdapter();
+        rvRecommendPhoto.setAdapter(recommendAdapter);
+
         initPickHelper();
+
     }
 
     @Override
@@ -369,12 +393,14 @@ public class MainActivityJava extends AppCompatActivity
                 .subscribe(new Action1<Object>() {
                     @Override
                     public void call(Object o) {
-                        DirImage dirImage = pickPreferences.getDirImage();
-                        int listSize = dirImage.dirName.size();
                         GroupImage groupImage = PickPreferences.getInstance(MainActivityJava.this).getListImage();
                         if (groupImage != null && groupImage.getGroupMap() != null && groupImage.getGroupMap().size() > 0) {
                             List<String> photoPathList = groupImage.getGroupMap().get(PickConfig.ALL_PHOTOS);
-                            List<Photo> photoList = new ArrayList<>();
+                            if (photoList == null) {
+                                photoList = new ArrayList<>();
+                            } else {
+                                photoList.clear();
+                            }
                             for (int index = 0; index < photoPathList.size(); index++) {
                                 String photoPath = photoPathList.get(index);
                                 ExifInterface exifInterface = null;
@@ -383,7 +409,6 @@ public class MainActivityJava extends AppCompatActivity
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
-                                Double altitude = exifInterface.getAltitude(0.0);
                                 float[] latArray = new float[2];
                                 exifInterface.getLatLong(latArray);
                                 Photo photo = new Photo();
@@ -400,34 +425,8 @@ public class MainActivityJava extends AppCompatActivity
                                 } else {
                                     photoList.add(photo);
                                     LatLng latLonPoint = new LatLng(photo.getLatitude(), photo.getLongitude());
-                                    addMarkersToMap(latLonPoint, photoPath);// 往地图上添加marker
+                                    addMarkersToMap(photo);// 往地图上添加marker
                                 }
-                                LatLng[] latlngs = new LatLng[1];
-
-                                //生成热力点坐标列表
-                                double x = photo.getLatitude();
-                                double y = photo.getLongitude();
-
-                                double x_ = 0;
-                                double y_ = 0;
-                                x_ = Math.random() * 0.5 - 0.25;
-                                y_ = Math.random() * 0.5 - 0.25;
-                                latlngs[0] = new LatLng(x, y);
-
-                                // 构建热力图 HeatmapTileProvider
-                                HeatmapTileProvider.Builder builder = new HeatmapTileProvider.Builder();
-                                builder.data(Arrays.asList(latlngs)) // 设置热力图绘制的数据
-                                        .gradient(HeatmapTileProvider.DEFAULT_GRADIENT); // 设置热力图渐变，有默认值 DEFAULT_GRADIENT，可不设置该接口
-                                // Gradient 的设置可见参考手册
-                                // 构造热力图对象
-                                HeatmapTileProvider heatmapTileProvider = builder.build();
-
-                                // 初始化 TileOverlayOptions
-                                TileOverlayOptions tileOverlayOptions = new TileOverlayOptions();
-                                tileOverlayOptions.tileProvider(heatmapTileProvider); // 设置瓦片图层的提供者
-                                // 向地图上添加 TileOverlayOptions 类对象
-                                aMap.addTileOverlay(tileOverlayOptions);
-//                            float distance = AMapUtils.calculateLineDistance(latLonPoint,latLng2);
                             }
                             initRVAdapter(photoList);
                         }
@@ -466,8 +465,6 @@ public class MainActivityJava extends AppCompatActivity
 //        photoDao = daoSession.getPhotoDao();
 //        photosQuery = photoDao.queryBuilder().orderAsc(PhotoDao.Properties.PhotoName).build();
 //        photos = photosQuery.list();
-
-
         getNearbyPhotos(photosList);
     }
 
@@ -483,10 +480,11 @@ public class MainActivityJava extends AppCompatActivity
                     Photo nearbyPhoto = photosList.get(j);
                     LatLng nearbyLat = new LatLng(nearbyPhoto.getLatitude(), nearbyPhoto.getLongitude());
                     float distanceM = AMapUtils.calculateLineDistance(curLat, nearbyLat);
-                    if (distanceM <= 2000) {
+                    if (distanceM <= 500) {
                         if (cursorPhoto.getPhotoTag() <= 0 && nearbyPhoto.getPhotoTag() <= 0) {
                             cursorPhoto.setPhotoTag(tempTag);
                             nearbyPhoto.setPhotoTag(tempTag);
+                            tagList.add(tempTag);
                             List<Photo> list = new ArrayList<Photo>();
                             list.add(cursorPhoto);
                             list.add(nearbyPhoto);
@@ -499,6 +497,7 @@ public class MainActivityJava extends AppCompatActivity
                                 List<Photo> photoList = sortedByLocation.get(tag);
                                 photoList.add(nearbyPhoto);
                                 sortedByLocation.put(tag, photoList);
+                                tagList.add(tag);
                             } else {
                                 if (nearbyPhoto.getPhotoTag() > 0) {
                                     int tag = nearbyPhoto.getPhotoTag();
@@ -506,13 +505,12 @@ public class MainActivityJava extends AppCompatActivity
                                     List<Photo> photoList = sortedByLocation.get(tag);
                                     photoList.add(cursorPhoto);
                                     sortedByLocation.put(tag, photoList);
+                                    tagList.add(tag);
                                 }
                             }
                         }
                         Log.e("log_tag", "distance : " + distanceM + " m");
                         nearbyPhotoCounterMap.put(cursorPhoto.getId(), nearbyPhoto.getId());
-                    } else {
-
                     }
                 }
             }
@@ -575,6 +573,101 @@ public class MainActivityJava extends AppCompatActivity
         }
     }
 
+    @Override
+    public void activate(OnLocationChangedListener onLocationChangedListener) {
+        mListener = onLocationChangedListener;
+        if (mlocationClient == null) {
+//            //初始化定位
+//            mlocationClient = new AMapLocationClient(this);
+//            //初始化定位参数
+//            mLocationOption = new AMapLocationClientOption();
+//            //设置定位回调监听
+//            mlocationClient.setLocationListener(this);
+//            //设置为高精度定位模式
+//            mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+//            //设置定位参数
+//            mlocationClient.setLocationOption(mLocationOption);
+//            // 此方法为每隔固定时间会发起一次定位请求，为了减少电量消耗或网络流量消耗，
+//            // 注意设置合适的定位时间的间隔（最小间隔支持为2000ms），并且在合适时间调用stopLocation()方法来取消定位请求
+//            // 在定位结束后，在合适的生命周期调用onDestroy()方法
+//            // 在单次定位情况下，定位无论成功与否，都无需调用stopLocation()方法移除请求，定位sdk内部会移除
+//            mlocationClient.startLocation();//启动定位
+        }
+    }
+
+    @Override
+    public void deactivate() {
+        mListener = null;
+        if (mlocationClient != null) {
+            mlocationClient.stopLocation();
+            mlocationClient.onDestroy();
+        }
+        mlocationClient = null;
+    }
+
+    @Override
+    public void onLocationChanged(AMapLocation aMapLocation) {
+        if (mListener != null && aMapLocation != null) {
+            if (aMapLocation != null
+                    && aMapLocation.getErrorCode() == 0) {
+                mListener.onLocationChanged(aMapLocation);// 显示系统小蓝点
+            } else {
+                String errText = "定位失败," + aMapLocation.getErrorCode() + ": " + aMapLocation.getErrorInfo();
+                Log.e("AmapErr", errText);
+            }
+        }
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        //设置希望展示的地图缩放级别
+        CameraUpdate mCameraUpdate = CameraUpdateFactory.zoomTo(progress);
+        aMap.moveCamera(mCameraUpdate);
+        if (photoList != null && photoList.size() > 0) {
+            for (int index = 0; index < photoList.size(); index++) {
+                Photo photo = photoList.get(index);
+                addMarkersToMap(photo);
+            }
+            if (tagList != null && tagList.size() > 0) {
+                List<Photo> recommendList = new ArrayList<>(3);
+                Iterator<Integer> iterator = tagList.iterator();
+                while (iterator.hasNext()) {
+                    Integer tag = iterator.next();
+                    if (tag != null) {
+                        for (int index = 0; index < photoList.size(); index++) {
+                            Photo photo = photoList.get(index);
+                            if (photo.getPhotoTag() == tag) {
+                                recommendList.add(photo);
+                            }
+                        }
+                    }
+                }
+                recommendAdapter.setRecommendList(recommendList);
+            }
+        }
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onCameraChange(CameraPosition cameraPosition) {
+        Log.e(TAG, "zoom : " + cameraPosition.zoom);
+    }
+
+    @Override
+    public void onCameraChangeFinish(CameraPosition cameraPosition) {
+        Log.e(TAG, "zoom finished : " + cameraPosition.zoom);
+
+    }
+
     public class PhotoRVAdapter extends RecyclerView.Adapter<PhotoRVAdapter.ViewHolder> {
 
         private List<Photo> photoList;
@@ -610,6 +703,7 @@ public class MainActivityJava extends AppCompatActivity
                     holder.tvPhotoGeoInfo.setText("lat = " + photo.getLatitude() + " , longitude = " + photo.getLongitude());
                     holder.tvPhotoDate.setText(photo.getPhotoDate());
                     holder.tvPhotoDescription.setText("tag: " + photo.getPhotoTag());
+                    holder.tvPhotoTag.setText(String.valueOf(photo.getPhotoTag()));
                 }
                 if (onItemClickedListener != null) {
                     holder.itemView.setTag(position);
@@ -643,6 +737,8 @@ public class MainActivityJava extends AppCompatActivity
         class ViewHolder extends RecyclerView.ViewHolder {
             @BindView(R.id.iv_photo)
             ImageView ivPhoto;
+            @BindView(R.id.tv_photo_tag)
+            TextView tvPhotoTag;
             @BindView(R.id.tv_photo_name)
             TextView tvPhotoName;
             @BindView(R.id.tv_photo_description)
@@ -653,6 +749,55 @@ public class MainActivityJava extends AppCompatActivity
             TextView tvPhotoGeoInfo;
 
             ViewHolder(View view) {
+                super(view);
+                ButterKnife.bind(this, view);
+            }
+        }
+    }
+
+    public static class RecommendPhotoRVAdapter extends RecyclerView.Adapter<RecommendPhotoRVAdapter.RecommendViewHolder> {
+
+        private List<Photo> recommendList = new ArrayList<>(3);
+
+        public void setRecommendList(List<Photo> recommendList) {
+            if (recommendList != null && recommendList.size() > 0) {
+                this.recommendList.clear();
+                this.recommendList.addAll(recommendList);
+                notifyDataSetChanged();
+            }
+        }
+
+        @Override
+        public RecommendViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View view = View.inflate(parent.getContext(), R.layout.item_recommend_photo, null);
+            return new RecommendViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(RecommendViewHolder holder, int position) {
+            Glide.with(holder.ivRecommend.getContext())
+                    .load(recommendList.get(position).getPhotoPath())
+                    .placeholder(R.drawable.ic_launcher)
+                    .into(holder.ivRecommend);
+        }
+
+        @Override
+        public int getItemCount() {
+            return recommendList != null ? recommendList.size() : 0;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        static class RecommendViewHolder extends RecyclerView.ViewHolder {
+            @BindView(R.id.iv_recommend)
+            ImageView ivRecommend;
+            @BindView(R.id.tv_recommend)
+            TextView tvRecommend;
+
+            RecommendViewHolder(View view) {
                 super(view);
                 ButterKnife.bind(this, view);
             }

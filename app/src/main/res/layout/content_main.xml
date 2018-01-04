@@ -10,12 +10,27 @@
     <com.amap.api.maps.MapView
         android:id="@+id/map_view"
         android:layout_width="match_parent"
-        android:layout_height="300dp" />
+        android:layout_height="400dp" />
+
+    <SeekBar
+        android:id="@+id/sb_zoom"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/map_view"
+        android:layout_centerHorizontal="true"
+        android:max="19"
+        android:min="3" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_recommend_photo"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_below="@+id/map_view" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rv_photo"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/map_view" />
+        android:layout_below="@+id/rv_recommend_photo" />
 
 </RelativeLayout>
