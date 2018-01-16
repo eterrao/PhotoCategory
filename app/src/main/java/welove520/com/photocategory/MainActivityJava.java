@@ -72,8 +72,9 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
-import welove520.com.photocategory.algorithm.strategy.BadStrategy;
 import welove520.com.photocategory.algorithm.StrategyContext;
+import welove520.com.photocategory.algorithm.strategy.BadStrategy;
+import welove520.com.photocategory.tensorflow.ImageClassifier;
 import welove520.com.photocategory.utils.PermissionManager;
 import welove520.com.photocategory.utils.PickConfig;
 import welove520.com.photocategory.utils.PickPhotoHelper;
@@ -124,12 +125,16 @@ public class MainActivityJava extends AppCompatActivity
     private Set<Integer> tagList;
     private RecommendPhotoRVAdapter recommendAdapter;
 
+
+    private ImageClassifier classifier;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
+        initTensorFlowClassifier();
         tagList = new LinkedHashSet<>();
         if (PermissionManager.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
         } else {
@@ -180,6 +185,14 @@ public class MainActivityJava extends AppCompatActivity
 
         sbZoom.setProgress((int) aMap.getCameraPosition().zoom);
         sbZoom.setOnSeekBarChangeListener(this);
+    }
+
+    private void initTensorFlowClassifier() {
+        try {
+            classifier = new ImageClassifier(this);
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to initialize an image classifier.");
+        }
     }
 
     /**
@@ -311,6 +324,9 @@ public class MainActivityJava extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
+        if (classifier != null) {
+            classifier.close();
+        }
         super.onDestroy();
         mapView.onDestroy();
         if (null != mlocationClient) {
@@ -421,6 +437,17 @@ public class MainActivityJava extends AppCompatActivity
                                 photo.setLatitude(Double.parseDouble(latArray[0] + ""));
                                 photo.setLongitude(Double.parseDouble(latArray[1] + ""));
                                 photo.setId((long) index);
+
+                                Bitmap clippedBitmap = getClipBitmap(photoPath, ImageClassifier.DIM_IMG_SIZE_X, ImageClassifier.DIM_IMG_SIZE_Y);
+                                if (clippedBitmap != null) {
+                                    Bitmap bitmap =
+                                            Bitmap.createBitmap(clippedBitmap,
+                                                    0, 0, ImageClassifier.DIM_IMG_SIZE_X, ImageClassifier.DIM_IMG_SIZE_Y);
+                                    String classifierResult = classifyFrame(bitmap);
+                                    photo.setPhotoClassify(classifierResult);
+                                    Log.e(TAG, " classify result :" + classifierResult);
+                                }
+
                                 if (photo.getLatitude() == 0 && photo.getLongitude() == 0) {
                                 } else {
                                     photoList.add(photo);
@@ -654,6 +681,7 @@ public class MainActivityJava extends AppCompatActivity
                     holder.tvPhotoDate.setText(photo.getPhotoDate());
                     holder.tvPhotoDescription.setText("tag: " + photo.getPhotoTag());
                     holder.tvPhotoTag.setText(String.valueOf(photo.getPhotoTag()));
+                    holder.tvPhotoClassify.setText(photo.getPhotoClassify());
                 }
                 if (onItemClickedListener != null) {
                     holder.itemView.setTag(position);
@@ -695,6 +723,8 @@ public class MainActivityJava extends AppCompatActivity
             TextView tvPhotoDescription;
             @BindView(R.id.tv_photo_date)
             TextView tvPhotoDate;
+            @BindView(R.id.tv_photo_classify)
+            TextView tvPhotoClassify;
             @BindView(R.id.tv_photo_geo_info)
             TextView tvPhotoGeoInfo;
 
@@ -891,5 +921,22 @@ public class MainActivityJava extends AppCompatActivity
         ViewHolder(View view) {
             ButterKnife.bind(this, view);
         }
+    }
+
+
+    /**
+     * Classifies a frame from the preview stream.
+     */
+    private String classifyFrame(Bitmap bitmap) {
+        if (classifier == null) {
+            Toast.makeText(this, "Uninitialized Classifier or invalid context.", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+        String textToShow = null;
+        if (bitmap != null) {
+            textToShow = classifier.classifyFrame(bitmap);
+        }
+        bitmap.recycle();
+        return textToShow;
     }
 }

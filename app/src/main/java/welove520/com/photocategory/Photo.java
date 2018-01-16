@@ -26,21 +26,23 @@ public class Photo {
     private Double latitude;
     private Double longitude;
     private String photoPath;
+    private String photoClassify;
     private int photoTag;
 
     @Generated(hash = 1043664727)
     public Photo() {
     }
 
-    @Generated(hash = 1160415127)
+    @Generated(hash = 461234580)
     public Photo(Long id, @NotNull String photoName, String photoDate, Double latitude,
-            Double longitude, String photoPath, int photoTag) {
+            Double longitude, String photoPath, String photoClassify, int photoTag) {
         this.id = id;
         this.photoName = photoName;
         this.photoDate = photoDate;
         this.latitude = latitude;
         this.longitude = longitude;
         this.photoPath = photoPath;
+        this.photoClassify = photoClassify;
         this.photoTag = photoTag;
     }
 
@@ -93,6 +95,14 @@ public class Photo {
         this.photoPath = photoPath;
     }
 
+    public String getPhotoClassify() {
+        return photoClassify;
+    }
+
+    public void setPhotoClassify(String photoClassify) {
+        this.photoClassify = photoClassify;
+    }
+
     public int getPhotoTag() {
         return photoTag;
     }
@@ -110,6 +120,7 @@ public class Photo {
                 ", latitude=" + latitude +
                 ", longitude=" + longitude +
                 ", photoPath='" + photoPath + '\'' +
+                ", photoClassify='" + photoClassify + '\'' +
                 ", photoTag=" + photoTag +
                 '}';
     }

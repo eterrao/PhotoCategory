@@ -69,5 +69,12 @@
             tools:layout_editor_absoluteX="113dp"
             tools:layout_editor_absoluteY="35dp" />
 
+        <TextView
+            android:id="@+id/tv_photo_classify"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="13sp" />
+
     </LinearLayout>
 </RelativeLayout>

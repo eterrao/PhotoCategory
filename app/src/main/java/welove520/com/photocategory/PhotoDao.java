@@ -28,7 +28,8 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         public final static Property Latitude = new Property(3, Double.class, "latitude", false, "LATITUDE");
         public final static Property Longitude = new Property(4, Double.class, "longitude", false, "LONGITUDE");
         public final static Property PhotoPath = new Property(5, String.class, "photoPath", false, "PHOTO_PATH");
-        public final static Property PhotoTag = new Property(6, int.class, "photoTag", false, "PHOTO_TAG");
+        public final static Property PhotoClassify = new Property(6, String.class, "photoClassify", false, "PHOTO_CLASSIFY");
+        public final static Property PhotoTag = new Property(7, int.class, "photoTag", false, "PHOTO_TAG");
     }
 
 
@@ -50,7 +51,8 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
                 "\"LATITUDE\" REAL," + // 3: latitude
                 "\"LONGITUDE\" REAL," + // 4: longitude
                 "\"PHOTO_PATH\" TEXT," + // 5: photoPath
-                "\"PHOTO_TAG\" INTEGER NOT NULL );"); // 6: photoTag
+                "\"PHOTO_CLASSIFY\" TEXT," + // 6: photoClassify
+                "\"PHOTO_TAG\" INTEGER NOT NULL );"); // 7: photoTag
         // Add Indexes
         db.execSQL("CREATE UNIQUE INDEX " + constraint + "IDX_PHOTO_PHOTO_NAME_PHOTO_DATE_DESC ON \"PHOTO\"" +
                 " (\"PHOTO_NAME\" ASC,\"PHOTO_DATE\" DESC);");
@@ -91,7 +93,12 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         if (photoPath != null) {
             stmt.bindString(6, photoPath);
         }
-        stmt.bindLong(7, entity.getPhotoTag());
+ 
+        String photoClassify = entity.getPhotoClassify();
+        if (photoClassify != null) {
+            stmt.bindString(7, photoClassify);
+        }
+        stmt.bindLong(8, entity.getPhotoTag());
     }
 
     @Override
@@ -123,7 +130,12 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         if (photoPath != null) {
             stmt.bindString(6, photoPath);
         }
-        stmt.bindLong(7, entity.getPhotoTag());
+ 
+        String photoClassify = entity.getPhotoClassify();
+        if (photoClassify != null) {
+            stmt.bindString(7, photoClassify);
+        }
+        stmt.bindLong(8, entity.getPhotoTag());
     }
 
     @Override
@@ -140,7 +152,8 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
             cursor.isNull(offset + 3) ? null : cursor.getDouble(offset + 3), // latitude
             cursor.isNull(offset + 4) ? null : cursor.getDouble(offset + 4), // longitude
             cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5), // photoPath
-            cursor.getInt(offset + 6) // photoTag
+            cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6), // photoClassify
+            cursor.getInt(offset + 7) // photoTag
         );
         return entity;
     }
@@ -153,7 +166,8 @@ public class PhotoDao extends AbstractDao<Photo, Long> {
         entity.setLatitude(cursor.isNull(offset + 3) ? null : cursor.getDouble(offset + 3));
         entity.setLongitude(cursor.isNull(offset + 4) ? null : cursor.getDouble(offset + 4));
         entity.setPhotoPath(cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5));
-        entity.setPhotoTag(cursor.getInt(offset + 6));
+        entity.setPhotoClassify(cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6));
+        entity.setPhotoTag(cursor.getInt(offset + 7));
      }
     
     @Override
