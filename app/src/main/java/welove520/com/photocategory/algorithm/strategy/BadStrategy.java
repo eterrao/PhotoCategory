@@ -25,6 +25,7 @@ public class BadStrategy implements ICategoryStrategy {
 
     @Override
     public Set<Integer> getNearbyPhotos(List<Photo> photosList) {
+
         Set<Integer> tagList = new LinkedHashSet<>();
         HashMap<Long, Long> nearbyPhotoCounterMap = new HashMap<>();
         int tempTag = 1;
