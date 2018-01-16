@@ -450,7 +450,6 @@ public class MainActivityJava extends AppCompatActivity
 //                photo.setLatitude(Double.parseDouble(latArray[0] + ""));
 //                photo.setLongitude(Double.parseDouble(latArray[1] + ""));
 //                photo.setPhotoDate(new Date());
-//
 //                photoDao.insert(photo);
 //                showDialog();
                 // 第一个参数表示一个Latlng，第二参数表示范围多少米，第三个参数表示是火系坐标系还是GPS原生坐标系
