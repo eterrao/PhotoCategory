@@ -247,6 +247,7 @@ public class MainActivityJava extends AppCompatActivity
         if (actualOutBitmap != scaledBitmap) {
             scaledBitmap.recycle();
         }
+
 //        //处理图片旋转问题
 //        ExifInterface exif = null;
 //        try {
@@ -463,6 +464,7 @@ public class MainActivityJava extends AppCompatActivity
 //        photoDao = daoSession.getPhotoDao();
 //        photosQuery = photoDao.queryBuilder().orderAsc(PhotoDao.Properties.PhotoName).build();
 //        photos = photosQuery.list();
+
         StrategyContext strategyContext = new StrategyContext(new BadStrategy());
         tagList.addAll(strategyContext.getNearbyPhotosCategory(photosList));
     }
