@@ -69,6 +69,7 @@ public class BadStrategy implements ICategoryStrategy {
                         }
                         Log.e("log_tag", "distance : " + distanceM + " m");
                         nearbyPhotoCounterMap.put(cursorPhoto.getId(), nearbyPhoto.getId());
+
                     }
                 }
             }
