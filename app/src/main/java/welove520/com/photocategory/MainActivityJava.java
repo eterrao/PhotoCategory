@@ -36,7 +36,6 @@ import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMap;
-import com.amap.api.maps.AMapUtils;
 import com.amap.api.maps.CameraUpdate;
 import com.amap.api.maps.CameraUpdateFactory;
 import com.amap.api.maps.LocationSource;
@@ -61,7 +60,6 @@ import org.greenrobot.greendao.query.Query;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -74,6 +72,8 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
+import welove520.com.photocategory.algorithm.strategy.BadStrategy;
+import welove520.com.photocategory.algorithm.StrategyContext;
 import welove520.com.photocategory.utils.PermissionManager;
 import welove520.com.photocategory.utils.PickConfig;
 import welove520.com.photocategory.utils.PickPhotoHelper;
@@ -465,60 +465,11 @@ public class MainActivityJava extends AppCompatActivity
 //        photoDao = daoSession.getPhotoDao();
 //        photosQuery = photoDao.queryBuilder().orderAsc(PhotoDao.Properties.PhotoName).build();
 //        photos = photosQuery.list();
-        getNearbyPhotos(photosList);
+
+        StrategyContext strategyContext = new StrategyContext(new BadStrategy());
+        tagList.addAll(strategyContext.getNearbyPhotosCategory(photosList));
     }
 
-    private void getNearbyPhotos(List<Photo> photosList) {
-        HashMap<Long, Long> nearbyPhotoCounterMap = new HashMap<>();
-        int tempTag = 1;
-        HashMap<Integer, List<Photo>> sortedByLocation = new HashMap<>();
-        for (int index = 0; index < photosList.size() - 1; index++) {
-            Photo cursorPhoto = photosList.get(index);
-            if (cursorPhoto.getLatitude() != 0 || cursorPhoto.getLongitude() != 0) {
-                LatLng curLat = new LatLng(cursorPhoto.getLatitude(), cursorPhoto.getLongitude());
-                for (int j = index + 1; j < photosList.size(); j++) {
-                    Photo nearbyPhoto = photosList.get(j);
-                    LatLng nearbyLat = new LatLng(nearbyPhoto.getLatitude(), nearbyPhoto.getLongitude());
-                    float distanceM = AMapUtils.calculateLineDistance(curLat, nearbyLat);
-                    if (distanceM <= 500) {
-                        if (cursorPhoto.getPhotoTag() <= 0 && nearbyPhoto.getPhotoTag() <= 0) {
-                            cursorPhoto.setPhotoTag(tempTag);
-                            nearbyPhoto.setPhotoTag(tempTag);
-                            tagList.add(tempTag);
-                            List<Photo> list = new ArrayList<Photo>();
-                            list.add(cursorPhoto);
-                            list.add(nearbyPhoto);
-                            sortedByLocation.put(tempTag, list);
-                            tempTag++;
-                        } else {
-                            if (cursorPhoto.getPhotoTag() > 0) {
-                                int tag = cursorPhoto.getPhotoTag();
-                                nearbyPhoto.setPhotoTag(tag);
-                                List<Photo> photoList = sortedByLocation.get(tag);
-                                photoList.add(nearbyPhoto);
-                                sortedByLocation.put(tag, photoList);
-                                tagList.add(tag);
-                            } else {
-                                if (nearbyPhoto.getPhotoTag() > 0) {
-                                    int tag = nearbyPhoto.getPhotoTag();
-                                    cursorPhoto.setPhotoTag(tag);
-                                    List<Photo> photoList = sortedByLocation.get(tag);
-                                    photoList.add(cursorPhoto);
-                                    sortedByLocation.put(tag, photoList);
-                                    tagList.add(tag);
-                                }
-                            }
-                        }
-                        Log.e("log_tag", "distance : " + distanceM + " m");
-                        nearbyPhotoCounterMap.put(cursorPhoto.getId(), nearbyPhoto.getId());
-                    }
-                }
-            }
-        }
-        Log.e("log_tag", "nearbyPhotoCounterMap : " + nearbyPhotoCounterMap.size());
-        Log.e("log_tag", "sortedByLocation : " + sortedByLocation.size());
-//        Iterator<Map.Entry<Long, Long>> iterator = nearbyPhotoCounterMap.entrySet().iterator();
-    }
 
     @Override
     public void onRegeocodeSearched(RegeocodeResult result, int rCode) {
