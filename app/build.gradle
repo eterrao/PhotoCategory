@@ -28,6 +28,9 @@ android {
             }
         }
     }
+    aaptOptions {
+        noCompress "tflite"
+    }
 }
 kapt { generateStubs = true }
 sourceSets {
@@ -74,9 +77,15 @@ dependencies {
     //搜索功能
     compile 'com.amap.api:search:latest.integration'
 
+    compile 'org.tensorflow:tensorflow-lite:+'
+
+
 }
 repositories {
     jcenter()
     google()
     mavenCentral()
+    maven {
+        url 'https://google.bintray.com/tensorflow'
+    }
 }
