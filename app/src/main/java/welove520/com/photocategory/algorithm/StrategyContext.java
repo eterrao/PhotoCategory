@@ -1,7 +1,6 @@
 package welove520.com.photocategory.algorithm;
 
 import java.util.List;
-import java.util.Set;
 
 import welove520.com.photocategory.Photo;
 
@@ -20,7 +19,7 @@ public class StrategyContext {
         this.strategy = strategy;
     }
 
-    public Set<Integer> getNearbyPhotosCategory(List<Photo> photosList) {
+    public List<Photo> getNearbyPhotosCategory(List<Photo> photosList) {
         return strategy != null ? strategy.getNearbyPhotos(photosList) : null;
     }
 }

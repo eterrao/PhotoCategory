@@ -1,5 +1,6 @@
 package welove520.com.photocategory;
 
+import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
@@ -15,7 +16,7 @@ import org.greenrobot.greendao.annotation.NotNull;
 
 
 @Entity(indexes = {@Index(value = "photoName, photoDate DESC", unique = true)})
-public class Photo {
+public class Photo implements Clusterable {
 
     @Id
     private Long id;
@@ -35,7 +36,7 @@ public class Photo {
 
     @Generated(hash = 461234580)
     public Photo(Long id, @NotNull String photoName, String photoDate, Double latitude,
-            Double longitude, String photoPath, String photoClassify, int photoTag) {
+                 Double longitude, String photoPath, String photoClassify, int photoTag) {
         this.id = id;
         this.photoName = photoName;
         this.photoDate = photoDate;
@@ -123,5 +124,10 @@ public class Photo {
                 ", photoClassify='" + photoClassify + '\'' +
                 ", photoTag=" + photoTag +
                 '}';
+    }
+
+    @Override
+    public double[] getPoint() {
+        return new double[]{latitude, longitude};
     }
 }

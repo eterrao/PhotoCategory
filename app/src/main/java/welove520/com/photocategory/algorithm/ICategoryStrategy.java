@@ -1,7 +1,6 @@
 package welove520.com.photocategory.algorithm;
 
 import java.util.List;
-import java.util.Set;
 
 import welove520.com.photocategory.Photo;
 
@@ -14,5 +13,5 @@ import welove520.com.photocategory.Photo;
 
 public interface ICategoryStrategy {
 
-    Set<Integer> getNearbyPhotos(List<Photo> photosList);
+    List<Photo> getNearbyPhotos(List<Photo> photosList);
 }

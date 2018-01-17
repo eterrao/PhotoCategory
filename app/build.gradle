@@ -9,6 +9,8 @@ android {
         applicationId "welove520.com.photocategory"
         minSdkVersion 15
         targetSdkVersion 26
+        multiDexEnabled true
+
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -78,6 +80,9 @@ dependencies {
     compile 'com.amap.api:search:latest.integration'
 
     compile 'org.tensorflow:tensorflow-lite:+'
+    compile 'org.apache.commons:commons-math3:3.6.1'
+    compile 'com.android.support:multidex:1.0.1'
+
 
 
 }

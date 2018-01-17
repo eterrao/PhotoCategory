@@ -55,6 +55,9 @@ import com.amap.api.services.geocoder.RegeocodeQuery;
 import com.amap.api.services.geocoder.RegeocodeResult;
 import com.bumptech.glide.Glide;
 
+import org.apache.commons.math3.ml.clustering.CentroidCluster;
+import org.apache.commons.math3.ml.clustering.Clusterable;
+import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 import org.greenrobot.greendao.query.Query;
 
 import java.io.File;
@@ -74,6 +77,7 @@ import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import welove520.com.photocategory.algorithm.StrategyContext;
 import welove520.com.photocategory.algorithm.strategy.BadStrategy;
+import welove520.com.photocategory.algorithm.strategy.KMeansPlusPlusClusterStrategy;
 import welove520.com.photocategory.tensorflow.ImageClassifier;
 import welove520.com.photocategory.utils.PermissionManager;
 import welove520.com.photocategory.utils.PickConfig;
@@ -122,7 +126,6 @@ public class MainActivityJava extends AppCompatActivity
     AMapLocationClient mlocationClient;
     AMapLocationClientOption mLocationOption;
     private ArrayList<Photo> photoList;
-    private Set<Integer> tagList;
     private RecommendPhotoRVAdapter recommendAdapter;
 
 
@@ -135,7 +138,6 @@ public class MainActivityJava extends AppCompatActivity
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
         initTensorFlowClassifier();
-        tagList = new LinkedHashSet<>();
         if (PermissionManager.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
         } else {
             String[] permissions = new String[]{
@@ -437,16 +439,7 @@ public class MainActivityJava extends AppCompatActivity
                                 photo.setLatitude(Double.parseDouble(latArray[0] + ""));
                                 photo.setLongitude(Double.parseDouble(latArray[1] + ""));
                                 photo.setId((long) index);
-
-                                Bitmap clippedBitmap = getClipBitmap(photoPath, ImageClassifier.DIM_IMG_SIZE_X, ImageClassifier.DIM_IMG_SIZE_Y);
-                                if (clippedBitmap != null) {
-                                    Bitmap bitmap =
-                                            Bitmap.createBitmap(clippedBitmap,
-                                                    0, 0, ImageClassifier.DIM_IMG_SIZE_X, ImageClassifier.DIM_IMG_SIZE_Y);
-                                    String classifierResult = classifyFrame(bitmap);
-                                    photo.setPhotoClassify(classifierResult);
-                                    Log.e(TAG, " classify result :" + classifierResult);
-                                }
+//                                classifyPhoto(photoPath, photo);
 
                                 if (photo.getLatitude() == 0 && photo.getLongitude() == 0) {
                                 } else {
@@ -460,6 +453,18 @@ public class MainActivityJava extends AppCompatActivity
                     }
                 });
 
+    }
+
+    private void classifyPhoto(String photoPath, Photo photo) {
+        Bitmap clippedBitmap = getClipBitmap(photoPath, ImageClassifier.DIM_IMG_SIZE_X, ImageClassifier.DIM_IMG_SIZE_Y);
+        if (clippedBitmap != null) {
+            Bitmap bitmap =
+                    Bitmap.createBitmap(clippedBitmap,
+                            0, 0, ImageClassifier.DIM_IMG_SIZE_X, ImageClassifier.DIM_IMG_SIZE_Y);
+            String classifierResult = classifyFrame(bitmap);
+            photo.setPhotoClassify(classifierResult);
+            Log.e(TAG, " classify result :" + classifierResult);
+        }
     }
 
     private void initRVAdapter(final List<Photo> photosList) {
@@ -492,8 +497,8 @@ public class MainActivityJava extends AppCompatActivity
 //        photosQuery = photoDao.queryBuilder().orderAsc(PhotoDao.Properties.PhotoName).build();
 //        photos = photosQuery.list();
 
-        StrategyContext strategyContext = new StrategyContext(new BadStrategy());
-        tagList.addAll(strategyContext.getNearbyPhotosCategory(photosList));
+        StrategyContext strategyContext = new StrategyContext(new KMeansPlusPlusClusterStrategy());
+        photoRVAdapter.setPhotos(strategyContext.getNearbyPhotosCategory(photosList));
     }
 
 
@@ -605,22 +610,22 @@ public class MainActivityJava extends AppCompatActivity
                 Photo photo = photoList.get(index);
                 addMarkersToMap(photo);
             }
-            if (tagList != null && tagList.size() > 0) {
-                List<Photo> recommendList = new ArrayList<>(3);
-                Iterator<Integer> iterator = tagList.iterator();
-                while (iterator.hasNext()) {
-                    Integer tag = iterator.next();
-                    if (tag != null) {
-                        for (int index = 0; index < photoList.size(); index++) {
-                            Photo photo = photoList.get(index);
-                            if (photo.getPhotoTag() == tag) {
-                                recommendList.add(photo);
-                            }
-                        }
-                    }
-                }
-                recommendAdapter.setRecommendList(recommendList);
-            }
+//            if (tagList != null && tagList.size() > 0) {
+//                List<Photo> recommendList = new ArrayList<>(3);
+//                Iterator<Integer> iterator = tagList.iterator();
+//                while (iterator.hasNext()) {
+//                    Integer tag = iterator.next();
+//                    if (tag != null) {
+//                        for (int index = 0; index < photoList.size(); index++) {
+//                            Photo photo = photoList.get(index);
+//                            if (photo.getPhotoTag() == tag) {
+//                                recommendList.add(photo);
+//                            }
+//                        }
+//                    }
+//                }
+//                recommendAdapter.setRecommendList(recommendList);
+//            }
         }
     }
 
@@ -705,7 +710,14 @@ public class MainActivityJava extends AppCompatActivity
         }
 
         public void setPhotos(List<Photo> photos) {
-            photoList = photos;
+            if (photos != null) {
+                if (this.photoList != null) {
+                    this.photoList.addAll(photos);
+                } else {
+                    this.photoList = photos;
+                }
+                notifyDataSetChanged();
+            }
         }
 
         public List<Photo> getPhotoList() {
