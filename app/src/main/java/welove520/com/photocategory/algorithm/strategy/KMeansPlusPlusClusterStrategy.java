@@ -24,6 +24,7 @@ import welove520.com.photocategory.algorithm.ICategoryStrategy;
 public class KMeansPlusPlusClusterStrategy implements ICategoryStrategy {
 
     private static final String TAG = KMeansPlusPlusClusterer.class.getSimpleName();
+    private static final int MAX_DISTANCE_M = 1500; // 1500m
     private int k = 1;
     private List<Photo> classifiedPhotoList = new ArrayList<>();
 
@@ -41,7 +42,7 @@ public class KMeansPlusPlusClusterStrategy implements ICategoryStrategy {
                 for (int index = 0; index < clusterResults.size(); index++) {
                     List<Photo> photoResult = clusterResults.get(index).getPoints();
                     double dist = findFarthestPairPoints(photoResult);
-                    if (dist > 500) {
+                    if (dist > MAX_DISTANCE_M) {
                         ++k;
                         getNearbyPhotos(photoList);
                         break;

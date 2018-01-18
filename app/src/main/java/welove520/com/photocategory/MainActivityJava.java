@@ -35,7 +35,6 @@ import android.widget.Toast;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.maps.AMap;
-import com.amap.api.maps.AMapUtils;
 import com.amap.api.maps.CameraUpdate;
 import com.amap.api.maps.CameraUpdateFactory;
 import com.amap.api.maps.MapView;
@@ -196,8 +195,8 @@ public class MainActivityJava extends AppCompatActivity
     private void addMarkersToMap(Photo photo) {
         if (photo == null) return;
         LatLng latLng = new LatLng(photo.getLatitude(), photo.getLongitude());
-        int width = 80;
-        int height = 80;
+        int width = 100;
+        int height = 100;
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         canvas.drawColor(Color.BLACK);
@@ -205,9 +204,9 @@ public class MainActivityJava extends AppCompatActivity
         brushPaint.setStyle(Paint.Style.FILL);
         brushPaint.setColor(Color.WHITE);
         brushPaint.setAntiAlias(true);
-        brushPaint.setTextSize(50);
+        brushPaint.setTextSize(20);
         brushPaint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText(String.valueOf(photo.getPhotoTag()), canvas.getWidth() / 2, canvas.getHeight() / 2, brushPaint);
+        canvas.drawText(String.valueOf(photo.getPhotoTag() + "\n" + photo.getPhotoAddress()), canvas.getWidth() / 2, canvas.getHeight() / 2, brushPaint);
         markerOption = new MarkerOptions()
                 .icon(BitmapDescriptorFactory.fromBitmap(bitmap))
                 .position(latLng)
