@@ -492,14 +492,15 @@ public class MainActivityJava extends AppCompatActivity
         StrategyContext strategyContext = new StrategyContext(new KMeansPlusPlusClusterStrategy(kValue));
         final List<Photo> list = strategyContext.getNearbyPhotosCategory(photosList);
         final Map<Integer, Photo> photoMap = new LinkedHashMap<>();
+        List<Photo> recommendList = new ArrayList<>();
         for (int index = 0; index < list.size(); index++) {
             Photo photo = list.get(index);
             if (!photoMap.containsKey(photo.getPhotoTag())) {
                 photoMap.put(photo.getPhotoTag(), photo);
+                recommendList.add(photo);
             }
         }
-//        calcuDistance(list);
-
+        recommendAdapter.setRecommendList(recommendList);
 
         for (int index = 0; index < photoMap.size(); index++) {
             final GeocodeSearch geocoderSearch = new GeocodeSearch(this);
@@ -652,6 +653,8 @@ public class MainActivityJava extends AppCompatActivity
                 Photo photo = photoList.get(index);
                 addMarkersToMap(photo);
             }
+
+            recommendAdapter.notifyDataSetChanged();
 //            if (tagList != null && tagList.size() > 0) {
 //                List<Photo> recommendList = new ArrayList<>(3);
 //                Iterator<Integer> iterator = tagList.iterator();
@@ -816,10 +819,12 @@ public class MainActivityJava extends AppCompatActivity
 
         @Override
         public void onBindViewHolder(RecommendViewHolder holder, int position) {
+            Photo photo = recommendList.get(position);
             Glide.with(holder.ivRecommend.getContext())
-                    .load(recommendList.get(position).getPhotoPath())
+                    .load(photo.getPhotoPath())
                     .placeholder(R.drawable.ic_launcher)
                     .into(holder.ivRecommend);
+            holder.tvRecommend.setText(photo.getPhotoAddress());
         }
 
         @Override
