@@ -28,15 +28,17 @@ public class Photo implements Clusterable {
     private Double longitude;
     private String photoPath;
     private String photoClassify;
+    private String photoAddress;
     private int photoTag;
+    private int tagCount;
 
     @Generated(hash = 1043664727)
     public Photo() {
     }
 
-    @Generated(hash = 461234580)
-    public Photo(Long id, @NotNull String photoName, String photoDate, Double latitude,
-                 Double longitude, String photoPath, String photoClassify, int photoTag) {
+    @Generated(hash = 1794596164)
+    public Photo(Long id, @NotNull String photoName, String photoDate, Double latitude, Double longitude, String photoPath, String photoClassify, String photoAddress, int photoTag,
+            int tagCount) {
         this.id = id;
         this.photoName = photoName;
         this.photoDate = photoDate;
@@ -44,7 +46,9 @@ public class Photo implements Clusterable {
         this.longitude = longitude;
         this.photoPath = photoPath;
         this.photoClassify = photoClassify;
+        this.photoAddress = photoAddress;
         this.photoTag = photoTag;
+        this.tagCount = tagCount;
     }
 
     public Long getId() {
@@ -104,6 +108,14 @@ public class Photo implements Clusterable {
         this.photoClassify = photoClassify;
     }
 
+    public String getPhotoAddress() {
+        return photoAddress;
+    }
+
+    public void setPhotoAddress(String photoAddress) {
+        this.photoAddress = photoAddress;
+    }
+
     public int getPhotoTag() {
         return photoTag;
     }
@@ -111,6 +123,15 @@ public class Photo implements Clusterable {
     public void setPhotoTag(int photoTag) {
         this.photoTag = photoTag;
     }
+
+    public int getTagCount() {
+        return tagCount;
+    }
+
+    public void setTagCount(int tagCount) {
+        this.tagCount = tagCount;
+    }
+
 
     @Override
     public String toString() {
@@ -122,7 +143,9 @@ public class Photo implements Clusterable {
                 ", longitude=" + longitude +
                 ", photoPath='" + photoPath + '\'' +
                 ", photoClassify='" + photoClassify + '\'' +
+                ", photoAddress='" + photoAddress + '\'' +
                 ", photoTag=" + photoTag +
+                ", tagCount=" + tagCount +
                 '}';
     }
 

@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.location.Location;
 import android.media.ExifInterface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -31,14 +32,12 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
-import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMap;
+import com.amap.api.maps.AMapUtils;
 import com.amap.api.maps.CameraUpdate;
 import com.amap.api.maps.CameraUpdateFactory;
-import com.amap.api.maps.LocationSource;
 import com.amap.api.maps.MapView;
 import com.amap.api.maps.UiSettings;
 import com.amap.api.maps.model.BitmapDescriptorFactory;
@@ -55,18 +54,14 @@ import com.amap.api.services.geocoder.RegeocodeQuery;
 import com.amap.api.services.geocoder.RegeocodeResult;
 import com.bumptech.glide.Glide;
 
-import org.apache.commons.math3.ml.clustering.CentroidCluster;
-import org.apache.commons.math3.ml.clustering.Clusterable;
-import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 import org.greenrobot.greendao.query.Query;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -76,7 +71,6 @@ import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import welove520.com.photocategory.algorithm.StrategyContext;
-import welove520.com.photocategory.algorithm.strategy.BadStrategy;
 import welove520.com.photocategory.algorithm.strategy.KMeansPlusPlusClusterStrategy;
 import welove520.com.photocategory.tensorflow.ImageClassifier;
 import welove520.com.photocategory.utils.PermissionManager;
@@ -87,7 +81,7 @@ import welove520.com.photocategory.utils.model.GroupImage;
 
 public class MainActivityJava extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        GeocodeSearch.OnGeocodeSearchListener, LocationSource, AMapLocationListener, SeekBar.OnSeekBarChangeListener, AMap.OnCameraChangeListener {
+        GeocodeSearch.OnGeocodeSearchListener, AMap.OnMyLocationChangeListener, SeekBar.OnSeekBarChangeListener, AMap.OnCameraChangeListener {
     private static final int PERMISSION_REQUEST_CODE = 7;
     private static final String TAG = MainActivityJava.class.getSimpleName();
 
@@ -122,7 +116,6 @@ public class MainActivityJava extends AppCompatActivity
     private UiSettings mUiSettings;//定义一个UiSettings对象
 
 
-    OnLocationChangedListener mListener;
     AMapLocationClient mlocationClient;
     AMapLocationClientOption mLocationOption;
     private ArrayList<Photo> photoList;
@@ -130,6 +123,7 @@ public class MainActivityJava extends AppCompatActivity
 
 
     private ImageClassifier classifier;
+    private int kValue = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -175,14 +169,13 @@ public class MainActivityJava extends AppCompatActivity
             mUiSettings.setMyLocationButtonEnabled(true); //显示默认的定位按钮
             mUiSettings.setScaleControlsEnabled(true);//控制比例尺控件是否显示
 
-            aMap.setLocationSource(this);//通过aMap对象设置定位数据源的监听
             MyLocationStyle myLocationStyle;
             myLocationStyle = new MyLocationStyle();//初始化定位蓝点样式类myLocationStyle.myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATION_ROTATE);//连续定位、且将视角移动到地图中心点，定位点依照设备方向旋转，并且会跟随设备移动。（1秒1次定位）如果不设置myLocationType，默认也会执行此种模式。
             myLocationStyle.interval(2000); //设置连续定位模式下的定位间隔，只在连续定位模式下生效，单次定位模式下不会生效。单位为毫秒。
             aMap.setMyLocationStyle(myLocationStyle);//设置定位蓝点的Style
 //aMap.getUiSettings().setMyLocationButtonEnabled(true);设置默认定位按钮是否显示，非必需设置。
             aMap.setMyLocationEnabled(true);// 设置为true表示启动显示定位蓝点，false表示隐藏定位蓝点并不进行定位，默认是false。
-            aMap.setOnCameraChangeListener(this);
+            myLocationStyle.showMyLocation(true);//设置是否显示定位小蓝点，用于满足只想使用定位，不想使用定位小蓝点的场景，设置false以后图面上不再有定位蓝点的概念，但是会持续回调位置信息。
         }
 
         sbZoom.setProgress((int) aMap.getCameraPosition().zoom);
@@ -497,10 +490,102 @@ public class MainActivityJava extends AppCompatActivity
 //        photosQuery = photoDao.queryBuilder().orderAsc(PhotoDao.Properties.PhotoName).build();
 //        photos = photosQuery.list();
 
-        StrategyContext strategyContext = new StrategyContext(new KMeansPlusPlusClusterStrategy());
-        photoRVAdapter.setPhotos(strategyContext.getNearbyPhotosCategory(photosList));
+        StrategyContext strategyContext = new StrategyContext(new KMeansPlusPlusClusterStrategy(kValue));
+        final List<Photo> list = strategyContext.getNearbyPhotosCategory(photosList);
+        final Map<Integer, Photo> photoMap = new LinkedHashMap<>();
+        for (int index = 0; index < list.size(); index++) {
+            Photo photo = list.get(index);
+            if (!photoMap.containsKey(photo.getPhotoTag())) {
+                photoMap.put(photo.getPhotoTag(), photo);
+            }
+        }
+//        calcuDistance(list);
+
+
+        for (int index = 0; index < photoMap.size(); index++) {
+            final GeocodeSearch geocoderSearch = new GeocodeSearch(this);
+            Photo photo = photoMap.get(index);
+            LatLonPoint latLonPoint = new LatLonPoint(photo.getLatitude(), photo.getLongitude());
+            RegeocodeQuery query = new RegeocodeQuery(latLonPoint, 200, GeocodeSearch.AMAP);
+            geocoderSearch.getFromLocationAsyn(query);
+            int order = index;
+            geocoderSearch.setOnGeocodeSearchListener(new OnCustomGeocodeSearchListener<Integer>(order) {
+                @Override
+                public void onRegeocodeSearched(RegeocodeResult result, int rCode) {
+                    Log.e("log_tag", "index = " + getCallbackObj() + " , getPoint = " + result.getRegeocodeQuery().getPoint().toString());
+                    Log.e(TAG, "index : " + getCallbackObj() + " format address : " + result.getRegeocodeAddress().getFormatAddress());
+                    Log.e(TAG, "index : " + getCallbackObj() + " format getBusinessAreas : " + result.getRegeocodeAddress().getBusinessAreas());
+                    Log.e(TAG, "index : " + getCallbackObj() + " format getBuilding : " + result.getRegeocodeAddress().getBuilding());
+                    if (rCode == AMapException.CODE_AMAP_SUCCESS) {
+                        if (result != null) {
+                            if (result.getRegeocodeAddress() != null) {
+                                List<BusinessArea> addressName = result.getRegeocodeAddress().getBusinessAreas();
+                                if (addressName != null && addressName.size() > 0) {
+                                    if (list != null && list.size() > 0) {
+                                        for (Photo photo : photosList) {
+                                            if (photo.getPhotoTag() - getCallbackObj() == 0) {
+                                                photo.setPhotoAddress(result.getRegeocodeAddress().getBusinessAreas().get(0).getName());
+                                            }
+                                        }
+                                        photoRVAdapter.setPhotos(list);
+                                    }
+                                    Log.e(TAG, "index = " + getCallbackObj() + " business address  = " + result.getRegeocodeAddress().getBusinessAreas().get(0).getName());
+                                } else {
+                                    if (list != null && list.size() > 0) {
+                                        for (Photo photo : photosList) {
+                                            if (photo.getPhotoTag() - getCallbackObj() == 0) {
+                                                photo.setPhotoAddress(result.getRegeocodeAddress().getFormatAddress());
+                                            }
+                                        }
+                                        photoRVAdapter.setPhotos(list);
+                                    }
+                                }
+                            }
+                        } else {
+                            Log.e(TAG, getApplicationContext().getResources().getString(R.string.no_result));
+                        }
+                    } else showerror(getApplicationContext(), rCode);
+                }
+
+                @Override
+                public void onGeocodeSearched(GeocodeResult geocodeResult, int i) {
+
+                }
+            });
+        }
+
+        photoRVAdapter.setPhotos(list);
     }
 
+    private void calcuDistance(List<Photo> list) {
+        if (list != null && list.size() > 0) {
+//            for (int index = 0; index < kValue; index++) {
+//                for (int i = 0; i < list.size(); i++) {
+//                    if (index == list.get(i).getPhotoTag()) {
+//
+//                    }
+//                }
+//            }
+
+//            findFarthestPairPoints(list);
+
+
+//            Point2D[] points = new Point2D[list.size()];
+//            for (int i = 0; i < list.size(); i++) {
+//                Double x = list.get(i).getLatitude();
+//                Double y = list.get(i).getLongitude();
+//                points[i] = new Point2D(x, y);
+//            }
+//            FarthestPair farthest = new FarthestPair(points);
+//            Log.e(TAG, "farthest point : " + farthest.distance() + " from " + farthest.either() + " to " + farthest.other());
+//            LatLng latLng1 = new LatLng(39.99785, 116.26785);
+//            LatLng latLng2 = new LatLng(39.998016, 116.26786);
+//            float distance = AMapUtils.calculateLineDistance(latLng1, latLng2);
+//            Log.e(TAG, " farthest distance ==> " + distance);
+        }
+
+
+    }
 
     @Override
     public void onRegeocodeSearched(RegeocodeResult result, int rCode) {
@@ -513,8 +598,10 @@ public class MainActivityJava extends AppCompatActivity
                     && result.getRegeocodeAddress().getFormatAddress() != null) {
 //                result.getRegeocodeAddress().getFormatAddress()
                 List<BusinessArea> addressName = result.getRegeocodeAddress().getBusinessAreas();
-                for (BusinessArea bussinessArea :
-                        addressName) {
+                if (addressName != null && addressName.size() > 0) {
+                    Toast.makeText(this, "business address  = " + result.getRegeocodeAddress().getBusinessAreas().get(0).getName(), Toast.LENGTH_SHORT).show();
+                }
+                for (BusinessArea bussinessArea : addressName) {
                     Log.e(TAG, "address area = " + bussinessArea.getName());
                 }
 //                aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
@@ -555,50 +642,6 @@ public class MainActivityJava extends AppCompatActivity
         }
     }
 
-    @Override
-    public void activate(OnLocationChangedListener onLocationChangedListener) {
-        mListener = onLocationChangedListener;
-        if (mlocationClient == null) {
-//            //初始化定位
-//            mlocationClient = new AMapLocationClient(this);
-//            //初始化定位参数
-//            mLocationOption = new AMapLocationClientOption();
-//            //设置定位回调监听
-//            mlocationClient.setLocationListener(this);
-//            //设置为高精度定位模式
-//            mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
-//            //设置定位参数
-//            mlocationClient.setLocationOption(mLocationOption);
-//            // 此方法为每隔固定时间会发起一次定位请求，为了减少电量消耗或网络流量消耗，
-//            // 注意设置合适的定位时间的间隔（最小间隔支持为2000ms），并且在合适时间调用stopLocation()方法来取消定位请求
-//            // 在定位结束后，在合适的生命周期调用onDestroy()方法
-//            // 在单次定位情况下，定位无论成功与否，都无需调用stopLocation()方法移除请求，定位sdk内部会移除
-//            mlocationClient.startLocation();//启动定位
-        }
-    }
-
-    @Override
-    public void deactivate() {
-        mListener = null;
-        if (mlocationClient != null) {
-            mlocationClient.stopLocation();
-            mlocationClient.onDestroy();
-        }
-        mlocationClient = null;
-    }
-
-    @Override
-    public void onLocationChanged(AMapLocation aMapLocation) {
-        if (mListener != null && aMapLocation != null) {
-            if (aMapLocation != null
-                    && aMapLocation.getErrorCode() == 0) {
-                mListener.onLocationChanged(aMapLocation);// 显示系统小蓝点
-            } else {
-                String errText = "定位失败," + aMapLocation.getErrorCode() + ": " + aMapLocation.getErrorInfo();
-                Log.e("AmapErr", errText);
-            }
-        }
-    }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -650,6 +693,12 @@ public class MainActivityJava extends AppCompatActivity
 
     }
 
+    @Override
+    public void onMyLocationChange(Location location) {
+        Log.e(TAG, " location ===> " + location.toString());
+    }
+
+
     public class PhotoRVAdapter extends RecyclerView.Adapter<PhotoRVAdapter.ViewHolder> {
 
         private List<Photo> photoList;
@@ -684,8 +733,8 @@ public class MainActivityJava extends AppCompatActivity
                     holder.tvPhotoName.setText(photo.getPhotoName());
                     holder.tvPhotoGeoInfo.setText("lat = " + photo.getLatitude() + " , longitude = " + photo.getLongitude());
                     holder.tvPhotoDate.setText(photo.getPhotoDate());
-                    holder.tvPhotoDescription.setText("tag: " + photo.getPhotoTag());
-                    holder.tvPhotoTag.setText(String.valueOf(photo.getPhotoTag()));
+                    holder.tvPhotoDescription.setText("address: " + photo.getPhotoAddress());
+                    holder.tvPhotoTag.setText(String.valueOf(photo.getPhotoTag() + "\n" + photo.getPhotoAddress()));
                     holder.tvPhotoClassify.setText(photo.getPhotoClassify());
                 }
                 if (onItemClickedListener != null) {
@@ -712,6 +761,7 @@ public class MainActivityJava extends AppCompatActivity
         public void setPhotos(List<Photo> photos) {
             if (photos != null) {
                 if (this.photoList != null) {
+                    this.photoList.clear();
                     this.photoList.addAll(photos);
                 } else {
                     this.photoList = photos;

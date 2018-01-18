@@ -25,7 +25,7 @@
         android:shadowDy="3"
         android:shadowRadius="2"
         android:textColor="#ffffff"
-        android:textSize="22sp" />
+        android:textSize="14sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
