@@ -7,6 +7,8 @@ import org.greenrobot.greendao.annotation.Id;
 import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.NotNull;
 
+import java.io.Serializable;
+
 /**
  * Created by Raomengyang on 17-12-26.
  * Email    : ericrao@welove-inc.com
@@ -16,7 +18,8 @@ import org.greenrobot.greendao.annotation.NotNull;
 
 
 @Entity(indexes = {@Index(value = "photoName, photoDate DESC", unique = true)})
-public class Photo implements Clusterable {
+public class Photo implements Clusterable, Serializable {
+    private static final long serialVersionUID = 3003712021798271649L;
 
     @Id
     private Long id;
@@ -38,7 +41,7 @@ public class Photo implements Clusterable {
 
     @Generated(hash = 1794596164)
     public Photo(Long id, @NotNull String photoName, String photoDate, Double latitude, Double longitude, String photoPath, String photoClassify, String photoAddress, int photoTag,
-            int tagCount) {
+                 int tagCount) {
         this.id = id;
         this.photoName = photoName;
         this.photoDate = photoDate;

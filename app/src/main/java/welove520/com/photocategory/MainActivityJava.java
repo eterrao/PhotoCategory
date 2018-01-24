@@ -3,6 +3,7 @@ package welove520.com.photocategory;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -54,6 +55,7 @@ import com.amap.api.services.geocoder.RegeocodeResult;
 import com.bumptech.glide.Glide;
 
 import org.greenrobot.greendao.query.Query;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +71,7 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
+import welove520.com.photocategory.algorithm.Main2Activity;
 import welove520.com.photocategory.algorithm.StrategyContext;
 import welove520.com.photocategory.algorithm.strategy.KMeansPlusPlusClusterStrategy;
 import welove520.com.photocategory.tensorflow.ImageClassifier;
@@ -335,6 +338,16 @@ public class MainActivityJava extends AppCompatActivity
         rvRecommendPhoto.setLayoutManager(recommendLayoutManager);
         recommendAdapter = new RecommendPhotoRVAdapter();
         rvRecommendPhoto.setAdapter(recommendAdapter);
+        recommendAdapter.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(@NotNull View view, int position) {
+                PhotoListModel photoListModel = new PhotoListModel();
+                photoListModel.setPhotoList(photoList);
+                Intent intent = new Intent(MainActivityJava.this, DuplicatedActivity.class);
+                intent.putExtra("photo_list", photoListModel);
+                startActivity(intent);
+            }
+        });
 
         initPickHelper();
 
@@ -431,12 +444,9 @@ public class MainActivityJava extends AppCompatActivity
                                 photo.setLatitude(Double.parseDouble(latArray[0] + ""));
                                 photo.setLongitude(Double.parseDouble(latArray[1] + ""));
                                 photo.setId((long) index);
-//                                classifyPhoto(photoPath, photo);
-
                                 if (photo.getLatitude() == 0 && photo.getLongitude() == 0) {
                                 } else {
                                     photoList.add(photo);
-                                    LatLng latLonPoint = new LatLng(photo.getLatitude(), photo.getLongitude());
                                     addMarkersToMap(photo);// 往地图上添加marker
                                 }
                             }
@@ -476,10 +486,11 @@ public class MainActivityJava extends AppCompatActivity
 //                photo.setPhotoDate(new Date());
 //                photoDao.insert(photo);
 //                showDialog();
-                // 第一个参数表示一个Latlng，第二参数表示范围多少米，第三个参数表示是火系坐标系还是GPS原生坐标系
-                LatLonPoint latLonPoint = new LatLonPoint(photo.getLatitude(), photo.getLongitude());
-                RegeocodeQuery query = new RegeocodeQuery(latLonPoint, 200, GeocodeSearch.AMAP);
-                geocoderSearch.getFromLocationAsyn(query);
+                PhotoListModel photoListModel = new PhotoListModel();
+                photoListModel.setPhotoList(photoList);
+                Intent intent = new Intent(MainActivityJava.this, Main2Activity.class);
+                intent.putExtra("photoList", photoListModel);
+                startActivity(intent);
             }
         });
         photoRVAdapter.setHasStableIds(true);
@@ -553,39 +564,9 @@ public class MainActivityJava extends AppCompatActivity
                 }
             });
         }
-
         photoRVAdapter.setPhotos(list);
     }
 
-    private void calcuDistance(List<Photo> list) {
-        if (list != null && list.size() > 0) {
-//            for (int index = 0; index < kValue; index++) {
-//                for (int i = 0; i < list.size(); i++) {
-//                    if (index == list.get(i).getPhotoTag()) {
-//
-//                    }
-//                }
-//            }
-
-//            findFarthestPairPoints(list);
-
-
-//            Point2D[] points = new Point2D[list.size()];
-//            for (int i = 0; i < list.size(); i++) {
-//                Double x = list.get(i).getLatitude();
-//                Double y = list.get(i).getLongitude();
-//                points[i] = new Point2D(x, y);
-//            }
-//            FarthestPair farthest = new FarthestPair(points);
-//            Log.e(TAG, "farthest point : " + farthest.distance() + " from " + farthest.either() + " to " + farthest.other());
-//            LatLng latLng1 = new LatLng(39.99785, 116.26785);
-//            LatLng latLng2 = new LatLng(39.998016, 116.26786);
-//            float distance = AMapUtils.calculateLineDistance(latLng1, latLng2);
-//            Log.e(TAG, " farthest distance ==> " + distance);
-        }
-
-
-    }
 
     @Override
     public void onRegeocodeSearched(RegeocodeResult result, int rCode) {
@@ -802,6 +783,7 @@ public class MainActivityJava extends AppCompatActivity
     public static class RecommendPhotoRVAdapter extends RecyclerView.Adapter<RecommendPhotoRVAdapter.RecommendViewHolder> {
 
         private List<Photo> recommendList = new ArrayList<>(3);
+        private OnItemClickListener onItemClickListener;
 
         public void setRecommendList(List<Photo> recommendList) {
             if (recommendList != null && recommendList.size() > 0) {
@@ -818,13 +800,21 @@ public class MainActivityJava extends AppCompatActivity
         }
 
         @Override
-        public void onBindViewHolder(RecommendViewHolder holder, int position) {
+        public void onBindViewHolder(RecommendViewHolder holder, final int position) {
             Photo photo = recommendList.get(position);
             Glide.with(holder.ivRecommend.getContext())
                     .load(photo.getPhotoPath())
                     .placeholder(R.drawable.ic_launcher)
                     .into(holder.ivRecommend);
             holder.tvRecommend.setText(photo.getPhotoAddress());
+            holder.ivRecommend.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (onItemClickListener != null) {
+                        onItemClickListener.onItemClick(v, position);
+                    }
+                }
+            });
         }
 
         @Override
@@ -835,6 +825,10 @@ public class MainActivityJava extends AppCompatActivity
         @Override
         public long getItemId(int position) {
             return position;
+        }
+
+        public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+            this.onItemClickListener = onItemClickListener;
         }
 
         static class RecommendViewHolder extends RecyclerView.ViewHolder {

@@ -72,8 +72,6 @@ dependencies {
     compile 'org.greenrobot:greendao:3.2.2' // add library
     //3D地图so及jar
     compile 'com.amap.api:3dmap:latest.integration'
-
-    compile 'com.amap.api:map2d:latest.integration'
     //定位功能
     compile 'com.amap.api:location:latest.integration'
     //搜索功能
@@ -82,7 +80,6 @@ dependencies {
     compile 'org.tensorflow:tensorflow-lite:+'
     compile 'org.apache.commons:commons-math3:3.6.1'
     compile 'com.android.support:multidex:1.0.1'
-
 
 
 }
